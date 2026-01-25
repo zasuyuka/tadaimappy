@@ -3,282 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー🌇V2</title>
+    <title>ただいまっぴー🌇V2.1</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
-        :root {
-            --primary-blue: #4a90e2;
-            --success-green: #4cd964;
-            --warning-red: #ff3b30;
-            --bg-light: #f0f7ff;
-            --card-bg: #ffffff;
-        }
+        :root { --p-blue: #4a90e2; --s-green: #4cd964; --w-red: #ff3b30; --bg: #f0f7ff; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* ダッシュボード */
+        .dashboard { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+        .time-display { display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .time-box h2 { font-size: 0.8rem; color: #888; margin: 0; }
+        .time-box p { font-size: 1.5rem; font-weight: bold; margin: 5px 0; color: var(--p-blue); }
+        .time-box p.bedtime { color: var(--w-red); }
 
-        body {
-            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
-            background-color: var(--bg-light);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #333;
-        }
+        /* リスト表示 */
+        #task-list { width: 100%; max-width: 500px; padding: 0; list-style: none; }
+        .card { background: white; margin-bottom: 10px; padding: 15px; border-radius: 15px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card.checked { opacity: 0.5; background: #eee; }
+        .card.checked .name { text-decoration: line-through; }
 
-        /* ダッシュボードエリア */
-        .dashboard {
-            background: var(--card-bg);
-            width: 100%;
-            max-width: 600px;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .time-info {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .time-box h2 { font-size: 0.9rem; color: #888; margin: 0; }
-        .time-box p { font-size: 1.8rem; font-weight: bold; margin: 5px 0; color: var(--primary-blue); }
-        .time-box .bedtime { color: var(--warning-red); }
-
-        /* プログレスバー */
-        .progress-container {
-            background: #eee;
-            border-radius: 10px;
-            height: 12px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-        #progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        /* リストエリア */
-        .list-header {
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        #task-list {
-            width: 100%;
-            max-width: 600px;
-            padding: 0;
-            margin: 0;
-        }
-
-        .task-card {
-            background: var(--card-bg);
-            margin-bottom: 12px;
-            padding: 15px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-            transition: transform 0.2s;
-        }
-
-        .task-card.checked { opacity: 0.6; background: #f9f9f9; }
-        .task-card.checked .task-name { text-decoration: line-through; color: #999; }
-
-        /* チェックボタン */
-        .check-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 2px solid #ddd;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            margin-right: 15px;
-            font-size: 1.2rem;
-            color: white;
-        }
-        .checked .check-btn { background: var(--success-green); border-color: var(--success-green); }
-
-        .task-info { flex: 1; }
-        .task-name { font-weight: bold; font-size: 1.1rem; display: block; }
-        .task-duration { font-size: 0.8rem; color: #888; }
-
-        /* 編集・削除ボタン（編集モード時のみ表示） */
-        .edit-controls { display: none; gap: 10px; }
-        .edit-mode .edit-controls { display: flex; }
-        .edit-mode .check-btn { display: none; }
-        .handle { cursor: grab; color: #ccc; margin-right: 10px; display: none; }
-        .edit-mode .handle { display: block; }
-
-        /* ボタン */
-        .btn {
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-add { background: var(--primary-blue); color: white; }
-        .btn-edit { background: #ffcc00; color: #333; }
-        .btn-done { background: var(--success-green); color: white; display: none; }
+        /* ボタン類 */
+        .check-btn { width: 30px; height: 30px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .checked .check-btn { background: var(--s-green); border-color: var(--s-green); color: white; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-add { background: var(--p-blue); color: white; }
+        .btn-edit { background: #f1c40f; color: white; }
+        
+        /* 編集モード専用 */
+        .handle { display: none; margin-right: 10px; color: #ccc; cursor: grab; }
+        .edit-tool { display: none; margin-left: auto; gap: 10px; }
+        body.edit-mode .handle, body.edit-mode .edit-tool { display: flex; }
+        body.edit-mode .check-btn { display: none; }
 
         /* モーダル */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center; align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            width: 80%;
-            max-width: 400px;
-        }
-        .modal-content input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-
-        .action-btn { font-size: 1.2rem; padding: 5px; cursor: pointer; color: #bbb; }
-        .action-btn:hover { color: var(--warning-red); }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999; }
+        .modal-content { background:white; padding:20px; border-radius:15px; width:80%; max-width:300px; }
+        .modal-content input { width:100%; padding:10px; margin:10px 0; box-sizing:border-box; }
     </style>
 </head>
-<body class="">
+<body>
 
     <div class="dashboard">
-        <h1 style="font-size: 1.2rem; margin-top: 0;">🌇 ただいまっぴー</h1>
-        <div class="time-info">
-            <div class="time-box">
-                <h2>今の時刻</h2>
-                <p id="current-time">--:--</p>
-            </div>
-            <div class="time-box">
-                <h2>寝る予定</h2>
-                <p id="finish-time" class="bedtime">--:--</p>
-            </div>
+        <div class="time-display">
+            <div class="time-box"><h2>現在</h2><p id="now-t">--:--</p></div>
+            <div class="time-box"><h2>寝る予定</h2><p id="bed-t" class="bedtime">--:--</p></div>
         </div>
-        <div class="progress-container">
-            <div id="progress-bar"></div>
-        </div>
-        <p id="total-left" style="font-size: 0.9rem; color: #666;">のこりタスク: --分</p>
+        <div id="left-t" style="font-size: 0.9rem; color: #666;">のこり合計: --分</div>
     </div>
 
-    <div class="list-header">
-        <h3 id="list-title">今日のやること</h3>
-        <div>
-            <button class="btn btn-edit" id="edit-mode-btn" onclick="toggleEditMode()">編集モード</button>
-            <button class="btn btn-done" id="done-mode-btn" onclick="toggleEditMode()">完了</button>
-            <button class="btn btn-add" onclick="openModal()">＋ 追加</button>
-        </div>
+    <div class="controls">
+        <button class="btn btn-add" onclick="openModal()">＋ 追加</button>
+        <button class="btn btn-edit" id="toggle-btn" onclick="toggleEdit()">編集モード</button>
     </div>
 
     <ul id="task-list"></ul>
 
-    <div id="taskModal" class="modal">
+    <div id="modal" class="modal">
         <div class="modal-content">
-            <h3 id="modal-title">タスクを追加</h3>
-            <input type="text" id="taskNameInput" placeholder="なにをする？ (例: 宿題)">
-            <input type="number" id="taskTimeInput" placeholder="どのくらいかかる？ (分)">
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button class="btn" onclick="closeModal()" style="flex:1; background:#eee;">キャンセル</button>
-                <button class="btn btn-add" id="saveTaskBtn" onclick="saveTask()" style="flex:1;">保存する</button>
-            </div>
+            <h3 id="m-title">タスク</h3>
+            <input type="text" id="in-name" placeholder="なにをする？">
+            <input type="number" id="in-time" placeholder="何分かかる？">
+            <button class="btn btn-add" onclick="saveTask()">保存</button>
+            <button class="btn" onclick="closeModal()">キャンセル</button>
         </div>
     </div>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('tadaimappy_tasks')) || [
-            { id: 1, name: "算数の宿題", time: 30, checked: false },
-            { id: 2, name: "漢字の練習", time: 20, checked: false },
-            { id: 3, name: "明日の準備", time: 10, checked: false }
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v2')) || [
+            {id: 1, name: "宿題", time: 30, done: false},
+            {id: 2, name: "お風呂", time: 20, done: false}
         ];
-        let editTargetId = null;
-
-        const listEl = document.getElementById('task-list');
+        let editId = null;
 
         function render() {
-            listEl.innerHTML = '';
-            let totalRemainingTime = 0;
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            let total = 0;
 
-            tasks.forEach(task => {
-                if (!task.checked) totalRemainingTime += parseInt(task.time);
-
+            tasks.forEach(t => {
+                if (!t.done) total += parseInt(t.time);
                 const li = document.createElement('li');
-                li.className = `task-card ${task.checked ? 'checked' : ''}`;
+                li.className = `card ${t.done ? 'checked' : ''}`;
                 li.innerHTML = `
                     <div class="handle"><i class="fas fa-bars"></i></div>
-                    <div class="check-btn" onclick="toggleCheck(${task.id})">
-                        <i class="fas fa-check"></i>
+                    <div class="check-btn" onclick="check(${t.id})">${t.done ? '✓' : ''}</div>
+                    <div style="flex:1">
+                        <div class="name">${t.name}</div>
+                        <div style="font-size:0.7rem; color:#888">${t.time}分</div>
                     </div>
-                    <div class="task-info">
-                        <span class="task-name">${task.name}</span>
-                        <span class="task-duration">所要時間: ${task.time}分</span>
-                    </div>
-                    <div class="edit-controls">
-                        <i class="fas fa-edit action-btn" onclick="openModal(${task.id})"></i>
-                        <i class="fas fa-trash-alt action-btn" onclick="deleteTask(${task.id})"></i>
+                    <div class="edit-tool">
+                        <i class="fas fa-edit" onclick="openModal(${t.id})"></i>
+                        <i class="fas fa-trash" onclick="del(${t.id})"></i>
                     </div>
                 `;
-                listEl.appendChild(li);
+                list.appendChild(li);
             });
 
-            updateDashboard(totalRemainingTime);
-            localStorage.setItem('tadaimappy_tasks', JSON.stringify(tasks));
-        }
-
-        function updateDashboard(remainingMinutes) {
             const now = new Date();
-            document.getElementById('current-time').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
-
-            // 予測寝る時間の計算
-            const finishDate = new Date(now.getTime() + remainingMinutes * 60000);
-            document.getElementById('finish-time').innerText = finishDate.getHours() + ":" + String(finishDate.getMinutes()).padStart(2, '0');
-            
-            document.getElementById('total-left').innerText = `のこり合計: ${remainingMinutes}分`;
-
-            // プログレスバー（簡易的に120分を最大として計算）
-            const percent = Math.min(100, (remainingMinutes / 120) * 100);
-            document.getElementById('progress-bar').style.width = (100 - percent) + "%";
+            const bed = new Date(now.getTime() + total * 60000);
+            document.getElementById('now-t').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2,'0');
+            document.getElementById('bed-t').innerText = bed.getHours() + ":" + String(bed.getMinutes()).padStart(2,'0');
+            document.getElementById('left-t').innerText = `のこり合計: ${total}分`;
+            localStorage.setItem('tadaima_v2', JSON.stringify(tasks));
         }
 
-        function toggleCheck(id) {
-            const task = tasks.find(t => t.id === id);
-            task.checked = !task.checked;
+        function check(id) {
+            const t = tasks.find(x => x.id === id);
+            t.done = !t.done;
             render();
         }
 
-        function toggleEditMode() {
+        function toggleEdit() {
             document.body.classList.toggle('edit-mode');
-            const isEdit = document.body.classList.contains('edit-mode');
-            document.getElementById('edit-mode-btn').style.display = isEdit ? 'none' : 'inline-block';
-            document.getElementById('done-mode-btn').style.display = isEdit ? 'inline-block' : 'none';
+            document.getElementById('toggle-btn').innerText = 
+                document.body.classList.contains('edit-mode') ? "完了" : "編集モード";
         }
 
-        // モーダル操作
         function openModal(id = null) {
-            editTargetId = id;
+            editId = id;
             if (id) {
-                const task = tasks.find(t => t.id === id);
-                document.getElementById
+                const t = tasks.find(x => x.id === id);
+                document.getElementById('in-name').value = t.name;
+                document.getElementById('in-time').value = t.time;
+            } else {
+                document.getElementById('in-name').value = '';
+                document.getElementById('in-time').value = '';
+            }
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        function saveTask() {
+            const n = document.getElementById('in-name').value;
+            const t = document.getElementById('in-time').value;
+            if (!n || !t) return;
+            if (editId) {
+                const task = tasks.find(x => x.id === editId);
+                task.name = n; task.time = t;
+            } else {
+                tasks.push({id: Date.now(), name: n, time: t, done: false});
+            }
+            closeModal(); render();
+        }
+
+        function del(id) {
+            tasks = tasks.filter(x => x.id !== id);
+            render();
+        }
+
+        new Sortable(document.getElementById('task-list'), {
+            handle: '.handle', animation: 150, onEnd: () => {
+                const newTasks = [];
+                document.querySelectorAll('.name').forEach(el => {
+                    const found = tasks.find(x => x.name === el.innerText);
+                    if(found) newTasks.push(found);
+                });
+                tasks = newTasks;
+                render();
+            }
+        });
+
+        setInterval(render, 30000); // 30秒ごとに時計更新
+        render();
+    </script>
+</body>
+</html>
