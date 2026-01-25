@@ -3,203 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー - 編集モード</title>
+    <title>ただいまっぴー🌇V2</title>
     
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <style>
         :root {
-            --main-color: #ff9a9e;
-            --accent-color: #fad0c4;
-            --text-color: #444;
-            --bg-color: #fdfbfb;
+            --primary-blue: #4a90e2;
+            --success-green: #4cd964;
+            --warning-red: #ff3b30;
+            --bg-light: #f0f7ff;
+            --card-bg: #ffffff;
         }
 
         body {
-            font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
-            background-color: var(--bg-color);
+            font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            background-color: var(--bg-light);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: var(--text-color);
+            color: #333;
         }
 
-        h1 { font-size: 1.4rem; margin-bottom: 15px; }
+        /* ダッシュボードエリア */
+        .dashboard {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            text-align: center;
+        }
 
-        /* 入力エリア */
-        .input-group {
+        .time-info {
             display: flex;
-            width: 100%;
-            max-width: 500px;
+            justify-content: space-around;
+            align-items: center;
             margin-bottom: 20px;
-            gap: 10px;
         }
 
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
+        .time-box h2 { font-size: 0.9rem; color: #888; margin: 0; }
+        .time-box p { font-size: 1.8rem; font-weight: bold; margin: 5px 0; color: var(--primary-blue); }
+        .time-box .bedtime { color: var(--warning-red); }
+
+        /* プログレスバー */
+        .progress-container {
+            background: #eee;
             border-radius: 10px;
-            font-size: 1rem;
-            outline: none;
+            height: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        #progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            width: 0%;
+            transition: width 0.5s ease;
         }
 
-        .add-btn {
-            padding: 0 20px;
-            background: var(--main-color);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        /* リストスタイル */
-        #sortable-list {
-            list-style: none;
-            padding: 0;
+        /* リストエリア */
+        .list-header {
             width: 100%;
-            max-width: 500px;
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
         }
 
-        .list-item {
-            background: white;
+        #task-list {
+            width: 100%;
+            max-width: 600px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-card {
+            background: var(--card-bg);
             margin-bottom: 12px;
             padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 15px;
             display: flex;
             align-items: center;
-            border: 1px solid #eee;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
         }
 
-        /* 掴むところ */
-        .handle {
+        .task-card.checked { opacity: 0.6; background: #f9f9f9; }
+        .task-card.checked .task-name { text-decoration: line-through; color: #999; }
+
+        /* チェックボタン */
+        .check-btn {
             width: 40px;
             height: 40px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
             display: flex;
             justify-content: center;
             align-items: center;
-            cursor: grab;
-            color: #bbb;
+            cursor: pointer;
+            margin-right: 15px;
             font-size: 1.2rem;
-            margin-right: 5px;
+            color: white;
         }
+        .checked .check-btn { background: var(--success-green); border-color: var(--success-green); }
 
-        /* 編集できるテキスト部分 */
-        .item-text {
-            flex: 1;
-            font-size: 1.1rem;
-            padding: 5px;
-            outline: none;
-            border-bottom: 1px solid transparent;
-        }
-        .item-text:focus {
-            border-bottom: 1px solid var(--main-color);
-            background: #fff9f9;
-        }
+        .task-info { flex: 1; }
+        .task-name { font-weight: bold; font-size: 1.1rem; display: block; }
+        .task-duration { font-size: 0.8rem; color: #888; }
 
-        /* 削除ボタン */
-        .delete-btn {
-            background: none;
+        /* 編集・削除ボタン（編集モード時のみ表示） */
+        .edit-controls { display: none; gap: 10px; }
+        .edit-mode .edit-controls { display: flex; }
+        .edit-mode .check-btn { display: none; }
+        .handle { cursor: grab; color: #ccc; margin-right: 10px; display: none; }
+        .edit-mode .handle { display: block; }
+
+        /* ボタン */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
             border: none;
-            color: #ffcccc;
-            font-size: 1.2rem;
-            padding: 10px;
+            font-weight: bold;
             cursor: pointer;
         }
-        .delete-btn:hover { color: #ff5e5e; }
+        .btn-add { background: var(--primary-blue); color: white; }
+        .btn-edit { background: #ffcc00; color: #333; }
+        .btn-done { background: var(--success-green); color: white; display: none; }
 
-        /* 並べ替え中の見た目 */
-        .sortable-ghost { opacity: 0.3; background: #f0f0f0; }
-        .sortable-chosen { background: #fffdfd; box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        /* モーダル */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 400px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .action-btn { font-size: 1.2rem; padding: 5px; cursor: pointer; color: #bbb; }
+        .action-btn:hover { color: var(--warning-red); }
     </style>
 </head>
-<body>
+<body class="">
 
-    <h1>🌇 ただいまっぴー設定</h1>
-
-    <div class="input-group">
-        <input type="text" id="newItemInput" placeholder="新しい項目を入力...">
-        <button class="add-btn" onclick="addItem()">＋</button>
+    <div class="dashboard">
+        <h1 style="font-size: 1.2rem; margin-top: 0;">🌇 ただいまっぴー</h1>
+        <div class="time-info">
+            <div class="time-box">
+                <h2>今の時刻</h2>
+                <p id="current-time">--:--</p>
+            </div>
+            <div class="time-box">
+                <h2>寝る予定</h2>
+                <p id="finish-time" class="bedtime">--:--</p>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="total-left" style="font-size: 0.9rem; color: #666;">のこりタスク: --分</p>
     </div>
 
-    <ul id="sortable-list">
-        </ul>
+    <div class="list-header">
+        <h3 id="list-title">今日のやること</h3>
+        <div>
+            <button class="btn btn-edit" id="edit-mode-btn" onclick="toggleEditMode()">編集モード</button>
+            <button class="btn btn-done" id="done-mode-btn" onclick="toggleEditMode()">完了</button>
+            <button class="btn btn-add" onclick="openModal()">＋ 追加</button>
+        </div>
+    </div>
 
-    <p style="font-size: 0.8rem; color: #999; margin-top: 20px;">
-        ※三本線をドラッグで移動、文字をタップで編集できます。<br>
-        ※変更は自動で保存されます。
-    </p>
+    <ul id="task-list"></ul>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title">タスクを追加</h3>
+            <input type="text" id="taskNameInput" placeholder="なにをする？ (例: 宿題)">
+            <input type="number" id="taskTimeInput" placeholder="どのくらいかかる？ (分)">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="closeModal()" style="flex:1; background:#eee;">キャンセル</button>
+                <button class="btn btn-add" id="saveTaskBtn" onclick="saveTask()" style="flex:1;">保存する</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const listContainer = document.getElementById('sortable-list');
-        const inputField = document.getElementById('newItemInput');
+        let tasks = JSON.parse(localStorage.getItem('tadaimappy_tasks')) || [
+            { id: 1, name: "算数の宿題", time: 30, checked: false },
+            { id: 2, name: "漢字の練習", time: 20, checked: false },
+            { id: 3, name: "明日の準備", time: 10, checked: false }
+        ];
+        let editTargetId = null;
 
-        // 1. データの読み込み
-        window.onload = () => {
-            const savedData = JSON.parse(localStorage.getItem('myTadaimaList')) || [
-                "手洗いうがいをする",
-                "ランドセルを片付ける",
-                "おたよりを出す"
-            ];
-            savedData.forEach(text => createItem(text));
-        };
+        const listEl = document.getElementById('task-list');
 
-        // 2. 項目を作成する関数
-        function createItem(text) {
-            const li = document.createElement('li');
-            li.className = 'list-item';
-            li.innerHTML = `
-                <div class="handle">☰</div>
-                <div class="item-text" contenteditable="true" oninput="saveAll()">${text}</div>
-                <button class="delete-btn" onclick="deleteItem(this)">✕</button>
-            `;
-            listContainer.appendChild(li);
-        }
+        function render() {
+            listEl.innerHTML = '';
+            let totalRemainingTime = 0;
 
-        // 3. 追加ボタンの処理
-        function addItem() {
-            const text = inputField.value.trim();
-            if (text) {
-                createItem(text);
-                inputField.value = '';
-                saveAll();
-            }
-        }
+            tasks.forEach(task => {
+                if (!task.checked) totalRemainingTime += parseInt(task.time);
 
-        // 4. 削除処理
-        function deleteItem(btn) {
-            if(confirm('この項目を消してもいいですか？')) {
-                btn.parentElement.remove();
-                saveAll();
-            }
-        }
-
-        // 5. 並べ替えの設定
-        new Sortable(listContainer, {
-            handle: '.handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            chosenClass: 'sortable-chosen',
-            onEnd: saveAll // 並べ替えたら保存
-        });
-
-        // 6. データの保存（LocalStorage）
-        function saveAll() {
-            const items = [];
-            document.querySelectorAll('.item-text').forEach(el => {
-                items.push(el.innerText);
+                const li = document.createElement('li');
+                li.className = `task-card ${task.checked ? 'checked' : ''}`;
+                li.innerHTML = `
+                    <div class="handle"><i class="fas fa-bars"></i></div>
+                    <div class="check-btn" onclick="toggleCheck(${task.id})">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="task-info">
+                        <span class="task-name">${task.name}</span>
+                        <span class="task-duration">所要時間: ${task.time}分</span>
+                    </div>
+                    <div class="edit-controls">
+                        <i class="fas fa-edit action-btn" onclick="openModal(${task.id})"></i>
+                        <i class="fas fa-trash-alt action-btn" onclick="deleteTask(${task.id})"></i>
+                    </div>
+                `;
+                listEl.appendChild(li);
             });
-            localStorage.setItem('myTadaimaList', JSON.stringify(items));
+
+            updateDashboard(totalRemainingTime);
+            localStorage.setItem('tadaimappy_tasks', JSON.stringify(tasks));
         }
 
-        // Enterキーでも追加できるようにする
-        inputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addItem();
-        });
-    </script>
-</body>
-</html>
+        function updateDashboard(remainingMinutes) {
+            const now = new Date();
+            document.getElementById('current-time').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+
+            // 予測寝る時間の計算
+            const finishDate = new Date(now.getTime() + remainingMinutes * 60000);
+            document.getElementById('finish-time').innerText = finishDate.getHours() + ":" + String(finishDate.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('total-left').innerText = `のこり合計: ${remainingMinutes}分`;
+
+            // プログレスバー（簡易的に120分を最大として計算）
+            const percent = Math.min(100, (remainingMinutes / 120) * 100);
+            document.getElementById('progress-bar').style.width = (100 - percent) + "%";
+        }
+
+        function toggleCheck(id) {
+            const task = tasks.find(t => t.id === id);
+            task.checked = !task.checked;
+            render();
+        }
+
+        function toggleEditMode() {
+            document.body.classList.toggle('edit-mode');
+            const isEdit = document.body.classList.contains('edit-mode');
+            document.getElementById('edit-mode-btn').style.display = isEdit ? 'none' : 'inline-block';
+            document.getElementById('done-mode-btn').style.display = isEdit ? 'inline-block' : 'none';
+        }
+
+        // モーダル操作
+        function openModal(id = null) {
+            editTargetId = id;
+            if (id) {
+                const task = tasks.find(t => t.id === id);
+                document.getElementById
