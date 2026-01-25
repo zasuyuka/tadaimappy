@@ -3,163 +3,378 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー🌇V2.1</title>
+    <title>ただいまっぴー🌇V3</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
-        :root { --p-blue: #4a90e2; --s-green: #4cd964; --w-red: #ff3b30; --bg: #f0f7ff; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        
+        :root {
+            --main-blue: #3b82f6;
+            --bg-color: #f3f8ff;
+            --card-white: #ffffff;
+            --text-main: #2c3e50;
+            --success: #4cd964;
+            --danger: #ff3b30;
+            --warning: #f1c40f;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-main);
+        }
+
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { color: #1e3a8a; font-size: 1.8rem; margin: 0; }
+        .header p { color: #64748b; font-size: 0.9rem; }
+
         /* ダッシュボード */
-        .dashboard { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
-        .time-display { display: flex; justify-content: space-around; margin-bottom: 15px; }
-        .time-box h2 { font-size: 0.8rem; color: #888; margin: 0; }
-        .time-box p { font-size: 1.5rem; font-weight: bold; margin: 5px 0; color: var(--p-blue); }
-        .time-box p.bedtime { color: var(--w-red); }
+        .dashboard {
+            background: var(--card-white);
+            width: 100%;
+            max-width: 600px;
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            position: relative;
+        }
 
-        /* リスト表示 */
-        #task-list { width: 100%; max-width: 500px; padding: 0; list-style: none; }
-        .card { background: white; margin-bottom: 10px; padding: 15px; border-radius: 15px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .card.checked { opacity: 0.5; background: #eee; }
-        .card.checked .name { text-decoration: line-through; }
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-        /* ボタン類 */
-        .check-btn { width: 30px; height: 30px; border: 2px solid #ddd; border-radius: 50%; margin-right: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .checked .check-btn { background: var(--s-green); border-color: var(--s-green); color: white; }
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn { padding: 10px 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-add { background: var(--p-blue); color: white; }
-        .btn-edit { background: #f1c40f; color: white; }
+        .time-box { text-align: center; flex: 1; }
+        .time-label { font-size: 0.8rem; color: #888; font-weight: bold; }
+        .time-value { font-size: 2rem; font-weight: 800; color: var(--main-blue); margin: 0; }
+        .bedtime-value { color: var(--danger); }
+
+        .clock-icon { width: 80px; height: 80px; opacity: 0.8; }
+
+        /* プログレスバーエリア */
+        .progress-section { margin-top: 10px; }
+        .bar-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #999; margin-bottom: 5px; }
         
-        /* 編集モード専用 */
-        .handle { display: none; margin-right: 10px; color: #ccc; cursor: grab; }
-        .edit-tool { display: none; margin-left: auto; gap: 10px; }
-        body.edit-mode .handle, body.edit-mode .edit-tool { display: flex; }
-        body.edit-mode .check-btn { display: none; }
+        .progress-wrapper {
+            height: 24px;
+            background: #eee;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #progress-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease, background-color 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .status-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        /* リスト */
+        .list-container { width: 100%; max-width: 600px; }
+        .list-tools { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; }
+
+        .task-card {
+            background: white;
+            margin-bottom: 12px;
+            padding: 15px 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+
+        .task-card.checked { opacity: 0.5; background: #f8fafc; }
+        
+        .task-icon {
+            width: 45px;
+            height: 45px;
+            background: #f0f7ff;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 1.2rem;
+            color: var(--main-blue);
+        }
+
+        .task-detail { flex: 1; }
+        .task-title { font-weight: bold; font-size: 1.1rem; display: block; }
+        .task-meta { font-size: 0.8rem; color: #94a3b8; }
+
+        .check-circle {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .checked .check-circle { background: var(--success); border-color: var(--success); color: white; }
+
+        /* 編集用 */
+        .edit-only { display: none; margin-left: auto; gap: 10px; }
+        body.edit-mode .edit-only { display: flex; }
+        body.edit-mode .check-circle { display: none; }
+        .drag-handle { color: #cbd5e1; cursor: grab; margin-right: 10px; display: none; }
+        body.edit-mode .drag-handle { display: block; }
+
+        /* ボタン */
+        .btn { border: none; padding: 8px 16px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-blue { background: var(--main-blue); color: white; }
+        .btn-edit { background: var(--warning); color: white; }
+        .btn-change { background: #e0f2fe; color: var(--main-blue); font-size: 0.75rem; padding: 4px 10px; }
 
         /* モーダル */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999; }
-        .modal-content { background:white; padding:20px; border-radius:15px; width:80%; max-width:300px; }
-        .modal-content input { width:100%; padding:10px; margin:10px 0; box-sizing:border-box; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 350px; }
+        .modal-content input, .modal-content select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
+    <div class="header">
+        <h1>ただいまっぴー</h1>
+        <p>今日のやることを計画的にやろう！</p>
+    </div>
+
     <div class="dashboard">
-        <div class="time-display">
-            <div class="time-box"><h2>現在</h2><p id="now-t">--:--</p></div>
-            <div class="time-box"><h2>寝る予定</h2><p id="bed-t" class="bedtime">--:--</p></div>
+        <div class="time-row">
+            <div class="time-box">
+                <div class="time-label">現在の時刻</div>
+                <div class="time-value" id="now-val">--:--</div>
+            </div>
+            <img src="https://cdn-icons-png.flaticon.com/512/3588/3588286.png" class="clock-icon">
+            <div class="time-box">
+                <div class="time-label">ねる時間</div>
+                <div class="time-value bedtime-value" id="bed-val">21:00</div>
+                <button class="btn btn-change" onclick="openBedtimeModal()">変更する</button>
+            </div>
         </div>
-        <div id="left-t" style="font-size: 0.9rem; color: #666;">のこり合計: --分</div>
+
+        <div class="progress-section">
+            <div class="bar-label">
+                <span>今</span>
+                <span>寝る時間</span>
+            </div>
+            <div class="progress-wrapper">
+                <div id="progress-bar"></div>
+            </div>
+            <div class="status-info">
+                <span id="stat-total" style="color:var(--main-blue)">タスク合計: --分</span>
+                <span id="stat-free" style="color:var(--danger)">自由時間: --分</span>
+            </div>
+        </div>
     </div>
 
-    <div class="controls">
-        <button class="btn btn-add" onclick="openModal()">＋ 追加</button>
-        <button class="btn btn-edit" id="toggle-btn" onclick="toggleEdit()">編集モード</button>
+    <div class="list-container">
+        <div class="list-tools">
+            <button class="btn btn-edit" id="toggle-edit-btn" onclick="toggleEditMode()">✏️ 編集モード</button>
+            <button class="btn btn-blue" onclick="openTaskModal()">＋ 追加</button>
+        </div>
+        <ul id="task-list" style="padding:0; list-style:none;"></ul>
     </div>
 
-    <ul id="task-list"></ul>
-
-    <div id="modal" class="modal">
+    <div id="taskModal" class="modal">
         <div class="modal-content">
-            <h3 id="m-title">タスク</h3>
+            <h3 id="m-title">やることを追加</h3>
             <input type="text" id="in-name" placeholder="なにをする？">
             <input type="number" id="in-time" placeholder="何分かかる？">
-            <button class="btn btn-add" onclick="saveTask()">保存</button>
-            <button class="btn" onclick="closeModal()">キャンセル</button>
+            <select id="in-icon">
+                <option value="book">📚 おべんきょう</option>
+                <option value="pencil-alt">✏️ えんぴつ</option>
+                <option value="gamepad">🎮 ゲーム</option>
+                <option value="bath">♨️ おふろ</option>
+                <option value="utensils">🍴 ごはん</option>
+                <option value="bed">💤 じゅんび</option>
+            </select>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn btn-blue" style="flex:1" onclick="saveTask()">保存</button>
+                <button class="btn" style="flex:1" onclick="closeModal('taskModal')">やめる</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bedtimeModal" class="modal">
+        <div class="modal-content">
+            <h3>寝る時間を設定</h3>
+            <div style="display:flex; align-items:center; gap:5px;">
+                <input type="number" id="bed-h" min="0" max="23" placeholder="時"> 時
+                <input type="number" id="bed-m" min="0" max="59" placeholder="分"> 分
+            </div>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn btn-blue" style="flex:1" onclick="saveBedtime()">設定する</button>
+                <button class="btn" style="flex:1" onclick="closeModal('bedtimeModal')">やめる</button>
+            </div>
         </div>
     </div>
 
     <script>
-        let tasks = JSON.parse(localStorage.getItem('tadaima_v2')) || [
-            {id: 1, name: "宿題", time: 30, done: false},
-            {id: 2, name: "お風呂", time: 20, done: false}
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v3_tasks')) || [
+            {id: 1, name: "算数の宿題", time: 30, icon: "book", done: false},
+            {id: 2, name: "漢字の練習", time: 20, icon: "pencil-alt", done: false}
         ];
+        let bedtime = localStorage.getItem('tadaima_v3_bedtime') || "21:00";
         let editId = null;
 
         function render() {
             const list = document.getElementById('task-list');
             list.innerHTML = '';
-            let total = 0;
+            let totalRemaining = 0;
 
             tasks.forEach(t => {
-                if (!t.done) total += parseInt(t.time);
+                if (!t.done) totalRemaining += parseInt(t.time);
                 const li = document.createElement('li');
-                li.className = `card ${t.done ? 'checked' : ''}`;
+                li.className = `task-card ${t.done ? 'checked' : ''}`;
                 li.innerHTML = `
-                    <div class="handle"><i class="fas fa-bars"></i></div>
-                    <div class="check-btn" onclick="check(${t.id})">${t.done ? '✓' : ''}</div>
-                    <div style="flex:1">
-                        <div class="name">${t.name}</div>
-                        <div style="font-size:0.7rem; color:#888">${t.time}分</div>
+                    <div class="drag-handle"><i class="fas fa-bars"></i></div>
+                    <div class="task-icon"><i class="fas fa-${t.icon}"></i></div>
+                    <div class="task-detail">
+                        <span class="task-title">${t.name}</span>
+                        <span class="task-meta">所要時間: ${t.time}分</span>
                     </div>
-                    <div class="edit-tool">
-                        <i class="fas fa-edit" onclick="openModal(${t.id})"></i>
-                        <i class="fas fa-trash" onclick="del(${t.id})"></i>
+                    <div class="check-circle" onclick="toggleCheck(${t.id})">
+                        ${t.done ? '<i class="fas fa-check"></i>' : ''}
+                    </div>
+                    <div class="edit-only">
+                        <i class="fas fa-edit" onclick="openTaskModal(${t.id})" style="color:#666"></i>
+                        <i class="fas fa-trash" onclick="deleteTask(${t.id})" style="color:#ffcccc"></i>
                     </div>
                 `;
                 list.appendChild(li);
             });
 
-            const now = new Date();
-            const bed = new Date(now.getTime() + total * 60000);
-            document.getElementById('now-t').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2,'0');
-            document.getElementById('bed-t').innerText = bed.getHours() + ":" + String(bed.getMinutes()).padStart(2,'0');
-            document.getElementById('left-t').innerText = `のこり合計: ${total}分`;
-            localStorage.setItem('tadaima_v2', JSON.stringify(tasks));
+            updateCalculations(totalRemaining);
+            localStorage.setItem('tadaima_v3_tasks', JSON.stringify(tasks));
         }
 
-        function check(id) {
+        function updateCalculations(totalRemaining) {
+            const now = new Date();
+            const [bH, bM] = bedtime.split(':').map(Number);
+            const bedDate = new Date();
+            bedDate.setHours(bH, bM, 0);
+
+            // もし設定時間が今より前（翌朝）なら、日付を翌日に
+            if (bedDate < now) bedDate.setDate(bedDate.getDate() + 1);
+
+            document.getElementById('now-val').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('bed-val').innerText = bedtime;
+            document.getElementById('stat-total').innerText = `タスク合計: ${totalRemaining}分`;
+
+            const diffMin = Math.floor((bedDate - now) / 60000);
+            const freeMin = diffMin - totalRemaining;
+            const bar = document.getElementById('progress-bar');
+
+            if (freeMin >= 0) {
+                const percent = Math.min(100, (totalRemaining / diffMin) * 100);
+                bar.style.width = percent + "%";
+                bar.style.backgroundColor = "var(--main-blue)";
+                bar.innerText = "";
+                document.getElementById('stat-free').innerText = `自由時間: ${Math.floor(freeMin/60)}時間${freeMin%60}分`;
+                document.getElementById('stat-free').style.color = "var(--success)";
+            } else {
+                bar.style.width = "100%";
+                bar.style.backgroundColor = "var(--danger)";
+                bar.innerText = "もう寝る時間です！";
+                document.getElementById('stat-free').innerText = `遅れ: ${Math.abs(freeMin)}分`;
+                document.getElementById('stat-free').style.color = "var(--danger)";
+            }
+        }
+
+        function toggleCheck(id) {
             const t = tasks.find(x => x.id === id);
             t.done = !t.done;
             render();
         }
 
-        function toggleEdit() {
+        function toggleEditMode() {
             document.body.classList.toggle('edit-mode');
-            document.getElementById('toggle-btn').innerText = 
-                document.body.classList.contains('edit-mode') ? "完了" : "編集モード";
+            document.getElementById('toggle-edit-btn').innerText = 
+                document.body.classList.contains('edit-mode') ? "✅ 完了" : "✏️ 編集モード";
         }
 
-        function openModal(id = null) {
+        // モーダル処理
+        function openTaskModal(id = null) {
             editId = id;
             if (id) {
                 const t = tasks.find(x => x.id === id);
                 document.getElementById('in-name').value = t.name;
                 document.getElementById('in-time').value = t.time;
+                document.getElementById('in-icon').value = t.icon;
             } else {
                 document.getElementById('in-name').value = '';
                 document.getElementById('in-time').value = '';
             }
-            document.getElementById('modal').style.display = 'flex';
+            document.getElementById('taskModal').style.display = 'flex';
         }
 
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        function openBedtimeModal() {
+            const [h, m] = bedtime.split(':');
+            document.getElementById('bed-h').value = h;
+            document.getElementById('bed-m').value = m;
+            document.getElementById('bedtimeModal').style.display = 'flex';
+        }
+
+        function closeModal(mId) { document.getElementById(mId).style.display = 'none'; }
 
         function saveTask() {
             const n = document.getElementById('in-name').value;
             const t = document.getElementById('in-time').value;
+            const i = document.getElementById('in-icon').value;
             if (!n || !t) return;
             if (editId) {
                 const task = tasks.find(x => x.id === editId);
-                task.name = n; task.time = t;
+                task.name = n; task.time = t; task.icon = i;
             } else {
-                tasks.push({id: Date.now(), name: n, time: t, done: false});
+                tasks.push({id: Date.now(), name: n, time: t, icon: i, done: false});
             }
-            closeModal(); render();
+            closeModal('taskModal'); render();
         }
 
-        function del(id) {
+        function saveBedtime() {
+            const h = String(document.getElementById('bed-h').value).padStart(2, '0');
+            const m = String(document.getElementById('bed-m').value).padStart(2, '0');
+            bedtime = `${h}:${m}`;
+            localStorage.setItem('tadaima_v3_bedtime', bedtime);
+            closeModal('bedtimeModal'); render();
+        }
+
+        function deleteTask(id) {
             tasks = tasks.filter(x => x.id !== id);
             render();
         }
 
         new Sortable(document.getElementById('task-list'), {
-            handle: '.handle', animation: 150, onEnd: () => {
+            handle: '.drag-handle', animation: 150, onEnd: () => {
                 const newTasks = [];
-                document.querySelectorAll('.name').forEach(el => {
+                document.querySelectorAll('.task-title').forEach(el => {
                     const found = tasks.find(x => x.name === el.innerText);
                     if(found) newTasks.push(found);
                 });
@@ -168,7 +383,7 @@
             }
         });
 
-        setInterval(render, 30000); // 30秒ごとに時計更新
+        setInterval(render, 30000);
         render();
     </script>
 </body>
