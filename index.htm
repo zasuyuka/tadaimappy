@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ただいまっぴー - 編集モード</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <style>
+        :root {
+            --main-color: #ff9a9e;
+            --accent-color: #fad0c4;
+            --text-color: #444;
+            --bg-color: #fdfbfb;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        h1 { font-size: 1.4rem; margin-bottom: 15px; }
+
+        /* 入力エリア */
+        .input-group {
+            display: flex;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .add-btn {
+            padding: 0 20px;
+            background: var(--main-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* リストスタイル */
+        #sortable-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .list-item {
+            background: white;
+            margin-bottom: 12px;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            border: 1px solid #eee;
+        }
+
+        /* 掴むところ */
+        .handle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+            color: #bbb;
+            font-size: 1.2rem;
+            margin-right: 5px;
+        }
+
+        /* 編集できるテキスト部分 */
+        .item-text {
+            flex: 1;
+            font-size: 1.1rem;
+            padding: 5px;
+            outline: none;
+            border-bottom: 1px solid transparent;
+        }
+        .item-text:focus {
+            border-bottom: 1px solid var(--main-color);
+            background: #fff9f9;
+        }
+
+        /* 削除ボタン */
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ffcccc;
+            font-size: 1.2rem;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .delete-btn:hover { color: #ff5e5e; }
+
+        /* 並べ替え中の見た目 */
+        .sortable-ghost { opacity: 0.3; background: #f0f0f0; }
+        .sortable-chosen { background: #fffdfd; box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <h1>🌇 ただいまっぴー設定</h1>
+
+    <div class="input-group">
+        <input type="text" id="newItemInput" placeholder="新しい項目を入力...">
+        <button class="add-btn" onclick="addItem()">＋</button>
+    </div>
+
+    <ul id="sortable-list">
+        </ul>
+
+    <p style="font-size: 0.8rem; color: #999; margin-top: 20px;">
+        ※三本線をドラッグで移動、文字をタップで編集できます。<br>
+        ※変更は自動で保存されます。
+    </p>
+
+    <script>
+        const listContainer = document.getElementById('sortable-list');
+        const inputField = document.getElementById('newItemInput');
+
+        // 1. データの読み込み
+        window.onload = () => {
+            const savedData = JSON.parse(localStorage.getItem('myTadaimaList')) || [
+                "手洗いうがいをする",
+                "ランドセルを片付ける",
+                "おたよりを出す"
+            ];
+            savedData.forEach(text => createItem(text));
+        };
+
+        // 2. 項目を作成する関数
+        function createItem(text) {
+            const li = document.createElement('li');
+            li.className = 'list-item';
+            li.innerHTML = `
+                <div class="handle">☰</div>
+                <div class="item-text" contenteditable="true" oninput="saveAll()">${text}</div>
+                <button class="delete-btn" onclick="deleteItem(this)">✕</button>
+            `;
+            listContainer.appendChild(li);
+        }
+
+        // 3. 追加ボタンの処理
+        function addItem() {
+            const text = inputField.value.trim();
+            if (text) {
+                createItem(text);
+                inputField.value = '';
+                saveAll();
+            }
+        }
+
+        // 4. 削除処理
+        function deleteItem(btn) {
+            if(confirm('この項目を消してもいいですか？')) {
+                btn.parentElement.remove();
+                saveAll();
+            }
+        }
+
+        // 5. 並べ替えの設定
+        new Sortable(listContainer, {
+            handle: '.handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: saveAll // 並べ替えたら保存
+        });
+
+        // 6. データの保存（LocalStorage）
+        function saveAll() {
+            const items = [];
+            document.querySelectorAll('.item-text').forEach(el => {
+                items.push(el.innerText);
+            });
+            localStorage.setItem('myTadaimaList', JSON.stringify(items));
+        }
+
+        // Enterキーでも追加できるようにする
+        inputField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addItem();
+        });
+    </script>
+</body>
+</html>
