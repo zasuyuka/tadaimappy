@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー🌇V4.2</title>
+    <title>ただいまっぴー🌇V4.3</title>
     
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
     <link rel="icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
@@ -120,7 +120,6 @@
         .btn-reset { background: #fee2e2; color: var(--danger); font-size: 0.85rem; display: none; }
         body.edit-mode .btn-reset { display: block; }
 
-        /* タイマー画面 */
         #timer-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: white; z-index: 2000; flex-direction: column; align-items: center; justify-content: center;
@@ -138,10 +137,10 @@
 <body>
 
     <div class="header">
-        <h1>ただいまっぴー <small style="font-size: 0.8rem; vertical-align: middle;">V4.2</small></h1>
+        <h1>ただいまっぴー <small style="font-size: 0.8rem; vertical-align: middle;">V4.3</small></h1>
     </div>
 
-    <div class="dashboard" id="main-dashboard">
+    <div class="dashboard">
         <div class="time-row">
             <div class="time-box">
                 <div class="time-label">今の時間</div>
@@ -171,7 +170,7 @@
                 <div id="progress-bar"></div>
             </div>
             <div class="status-info">
-                <span id="stat-total" style="color:var(--main-blue)">合計時間: --</span>
+                <span id="stat-total" style="color:var(--main-blue)">合計: --</span>
                 <span id="stat-free">自由時間: --</span>
             </div>
         </div>
@@ -237,31 +236,36 @@
     </div>
 
     <script>
-        // データ初期化
-        let tasks = JSON.parse(localStorage.getItem('tadaima_v42_tasks')) || [
-            {id: 1, name: "宿題", time: 30, icon: "pencil-alt", done: false, elapsed: 0}
+        // 画像に基づいたデフォルトタスク
+        const defaultTasks = [
+            {id: 1, name: "宿題", time: 45, icon: "book", done: false, elapsed: 0},
+            {id: 2, name: "お風呂を沸かす", time: 10, icon: "bath", done: false, elapsed: 0},
+            {id: 3, name: "お風呂に入る", time: 30, icon: "bath", done: false, elapsed: 0},
+            {id: 4, name: "歯磨き", time: 3, icon: "tooth", done: false, elapsed: 0},
+            {id: 5, name: "布団を畳む", time: 7, icon: "bed", done: false, elapsed: 0},
+            {id: 6, name: "洗濯物をしまう", time: 10, icon: "shirt", done: false, elapsed: 0},
+            {id: 7, name: "ホームページ", time: 20, icon: "gamepad", done: false, elapsed: 0},
+            {id: 8, name: "ゲーム", time: 120, icon: "gamepad", done: false, elapsed: 0}
         ];
-        let bedtime = localStorage.getItem('tadaima_v42_bedtime') || "21:00";
+
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v43_tasks')) || defaultTasks;
+        let bedtime = localStorage.getItem('tadaima_v43_bedtime') || "21:00";
         let editId = null;
         let timerInterval = null;
         let activeTaskId = null;
 
-        // 日付をまたいだ時のリセット処理
         function checkDayChange() {
             const lastDate = localStorage.getItem('tadaima_last_date');
             const today = new Date().toLocaleDateString();
             if (lastDate && lastDate !== today) {
-                resetAllTasks(false); // 日付変更時は確認なしでリセット
+                resetAllTasks(false);
             }
             localStorage.setItem('tadaima_last_date', today);
         }
 
         function resetAllTasks(confirmNeeded = true) {
-            if (confirmNeeded && !confirm('今日のがんばった記録とチェックをすべてリセットしますか？')) return;
-            tasks.forEach(t => {
-                t.done = false;
-                t.elapsed = 0;
-            });
+            if (confirmNeeded && !confirm('今日のがんばった記録をリセットしますか？')) return;
+            tasks.forEach(t => { t.done = false; t.elapsed = 0; });
             render();
         }
 
@@ -304,7 +308,7 @@
                 list.appendChild(li);
             });
             calculateStatus(total);
-            localStorage.setItem('tadaima_v42_tasks', JSON.stringify(tasks));
+            localStorage.setItem('tadaima_v43_tasks', JSON.stringify(tasks));
         }
 
         function startTimer(id) {
@@ -312,9 +316,8 @@
             if (task.done) return;
             activeTaskId = id;
             document.getElementById('timer-task-name').innerText = task.name;
-            document.getElementById('timer-goal-text').innerText = `目標の時間: ${task.time}分`;
-            const overlay = document.getElementById('timer-overlay');
-            overlay.style.display = 'flex';
+            document.getElementById('timer-goal-text').innerText = `目標: ${task.time}分`;
+            document.getElementById('timer-overlay').style.display = 'flex';
             updateTimerDisplay(task);
             timerInterval = setInterval(() => {
                 task.elapsed++;
@@ -327,21 +330,16 @@
             const s = task.elapsed % 60;
             const timerMain = document.getElementById('timer-main');
             const diffText = document.getElementById('timer-diff-text');
-            const overlay = document.getElementById('timer-overlay');
             timerMain.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
             const goalSec = task.time * 60;
             const diffSec = goalSec - task.elapsed;
             const absDiffMin = Math.ceil(Math.abs(diffSec) / 60);
             if (diffSec >= 0) {
-                diffText.innerText = `残り時間: 約${absDiffMin}分`;
+                diffText.innerText = `残り約 ${absDiffMin}分`;
                 diffText.style.color = "var(--main-blue)";
-                timerMain.style.color = "var(--text-main)";
-                overlay.style.background = "white";
             } else {
-                diffText.innerText = `${absDiffMin}分 継続中！（すごい！）`;
+                diffText.innerText = `${absDiffMin}分 オーバー（継続中）`;
                 diffText.style.color = "var(--success)";
-                timerMain.style.color = "var(--success)";
-                overlay.style.background = "#f0fff4";
             }
         }
 
@@ -377,7 +375,7 @@
                 document.getElementById('stat-free').innerText = `不足: ${formatTimeSpan(Math.abs(freeMin))}`;
                 document.getElementById('stat-free').style.color = "var(--danger)";
             }
-            document.getElementById('stat-total').innerText = `合計時間: ${formatTimeSpan(total)}`;
+            document.getElementById('stat-total').innerText = `合計: ${formatTimeSpan(total)}`;
             document.getElementById('bed-val').innerText = bedtime;
         }
 
@@ -403,7 +401,6 @@
                 document.getElementById('modal-title').innerText = "予定の追加";
                 document.getElementById('in-name').value = '';
                 document.getElementById('in-time').value = '';
-                document.getElementById('in-icon').selectedIndex = 0;
             }
             document.getElementById('taskModal').style.display = 'flex';
         }
@@ -420,23 +417,21 @@
             const n = document.getElementById('in-name').value;
             const t = document.getElementById('in-time').value;
             const i = document.getElementById('in-icon').value;
-            if (!n || !t) { alert('なまえと時間を入力してね！'); return; }
-            
+            if (!n || !t) return;
             if (editId) {
                 const task = tasks.find(x => x.id === editId);
                 if(task) { task.name = n; task.time = t; task.icon = i; }
             } else {
                 tasks.push({id: Date.now(), name: n, time: t, icon: i, done: false, elapsed: 0});
             }
-            closeModal('taskModal');
-            render();
+            closeModal('taskModal'); render();
         }
 
         function saveBedtime() {
             const h = String(document.getElementById('bed-h').value || 0).padStart(2, '0');
             const m = String(document.getElementById('bed-m').value || 0).padStart(2, '0');
             bedtime = `${h}:${m}`;
-            localStorage.setItem('tadaima_v42_bedtime', bedtime);
+            localStorage.setItem('tadaima_v43_bedtime', bedtime);
             closeModal('bedtimeModal'); render();
         }
 
