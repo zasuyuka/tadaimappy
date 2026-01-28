@@ -3,95 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー🌇V4.4</title>
-    
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
-    <link rel="icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
-
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ただいまっぴー">
-    
+    <title>ただいまっぴー🌇V4.5 (ログ対応版)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
     <style>
-        :root {
-            --main-blue: #3b82f6; --bg-color: #f3f8ff; --card-white: #ffffff;
-            --text-main: #2c3e50; --success: #4cd964; --danger: #ff3b30; --warning: #f1c40f;
-        }
-        body {
-            font-family: "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color); margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center; color: var(--text-main);
-        }
-        .dashboard {
-            background: var(--card-white); width: 100%; max-width: 600px;
-            padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            margin-bottom: 25px; box-sizing: border-box;
-        }
+        :root { --main-blue: #3b82f6; --bg-color: #f3f8ff; --card-white: #ffffff; --text-main: #2c3e50; --success: #4cd964; --danger: #ff3b30; --warning: #f1c40f; }
+        body { font-family: sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .dashboard { background: var(--card-white); width: 100%; max-width: 600px; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px; box-sizing: border-box; }
         .time-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .time-value { font-size: 1.8rem; font-weight: 800; color: var(--main-blue); }
         .analog-clock { width: 110px; height: 110px; background: white; border: 4px solid #333; border-radius: 50%; position: relative; }
         .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; background: #333; border-radius: 4px; }
         .hour-hand { width: 5px; height: 25%; } .min-hand { width: 3px; height: 40%; } .sec-hand { width: 1.5px; height: 45%; background: var(--danger); }
-        
         .progress-wrapper { height: 28px; background: #eee; border-radius: 14px; overflow: hidden; }
         #progress-bar { height: 100%; width: 0%; transition: width 0.5s; background: var(--main-blue); }
-
         .list-container { width: 100%; max-width: 600px; }
-        .task-card {
-            background: white; margin-bottom: 12px; padding: 15px; border-radius: 18px;
-            display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        }
+        .task-card { background: white; margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         .task-card.checked { opacity: 0.5; }
         .task-icon { width: 50px; height: 50px; background: #f0f7ff; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; color: var(--main-blue); margin-right: 15px; }
         .check-circle { width: 45px; height: 45px; border: 2px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .checked .check-circle { background: var(--success); border-color: var(--success); color: white; }
-
-        #timer-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-        }
-        .timer-display { font-size: 6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #timer-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .timer-display { font-size: 6rem; font-weight: 800; }
         .btn { border: none; padding: 12px 20px; border-radius: 15px; font-weight: bold; cursor: pointer; }
         .btn-blue { background: var(--main-blue); color: white; }
-        .edit-only { display: none; margin-left: auto; gap: 10px; }
-        body.edit-mode .edit-only { display: flex; }
-        body.edit-mode .check-circle, body.edit-mode .timer-btn { display: none; }
-        .btn-reset { display: none; background: #fee2e2; color: var(--danger); }
-        body.edit-mode .btn-reset { display: block; }
     </style>
 </head>
 <body>
 
-    <h1>ただいまっぴー <small>V4.4</small></h1>
+    <h1>ただいまっぴー <small>V4.5</small></h1>
 
     <div class="dashboard">
         <div class="time-row">
-            <div style="text-align:center"><div>今</div><div class="time-value" id="now-val">--:--</div></div>
+            <div style="text-align:center">今<br><span class="time-value" id="now-val">--:--</span></div>
             <div class="analog-clock">
                 <div class="hand hour-hand" id="hour-hand"></div>
                 <div class="hand min-hand" id="min-hand"></div>
                 <div class="hand sec-hand" id="sec-hand"></div>
             </div>
-            <div style="text-align:center"><div>寝る</div><div class="time-value" id="bed-val">21:00</div>
-            <button onclick="openBedtimeModal()" style="font-size:0.7rem">設定</button></div>
+            <div style="text-align:center">寝る<br><span class="time-value" id="bed-val">21:00</span></div>
         </div>
         <div class="progress-wrapper"><div id="progress-bar"></div></div>
-        <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:bold;">
-            <span id="stat-total">合計: --</span><span id="stat-free">自由: --</span>
-        </div>
     </div>
 
     <div class="list-container">
-        <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-            <button class="btn btn-reset" onclick="resetAllTasks()">🔄 リセット</button>
-            <div style="margin-left:auto; display:flex; gap:10px;">
-                <button class="btn" style="background:var(--warning); color:white" onclick="toggleEditMode()">✏️ 編集</button>
-                <button class="btn btn-blue" onclick="openTaskModal()">＋ 追加</button>
-            </div>
-        </div>
         <ul id="task-list" style="padding:0; list-style:none"></ul>
     </div>
 
@@ -99,28 +54,14 @@
         <h2 id="timer-task-name"></h2>
         <div class="timer-display" id="timer-main">00:00</div>
         <div id="timer-diff-text" style="font-size:1.5rem; margin-bottom:30px"></div>
-        <div style="display:flex; gap:20px;">
-            <button class="btn btn-blue" style="width:150px; height:60px;" onclick="stopTimer(true)">おわった！</button>
-            <button class="btn" style="background:#eee; width:100px;" onclick="stopTimer(false)">とめる</button>
-        </div>
-    </div>
-
-    <div id="taskModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:3000; align-items:center; justify-content:center;">
-        <div style="background:white; padding:30px; border-radius:20px; width:80%; max-width:400px;">
-            <h3 id="modal-title">タスク</h3>
-            <input type="text" id="in-name" placeholder="なまえ" style="width:100%; padding:10px; margin-bottom:10px;">
-            <input type="number" id="in-time" placeholder="分" style="width:100%; padding:10px; margin-bottom:10px;">
-            <select id="in-icon" style="width:100%; padding:10px; margin-bottom:20px;">
-                <option value="book">📚 勉強</option><option value="bath">♨️ お風呂</option>
-                <option value="tooth">🪥 歯みがき</option><option value="bed">💤 寝る</option>
-                <option value="shirt">👕 着替え</option><option value="gamepad">🎮 遊び</option>
-            </select>
-            <button class="btn btn-blue" onclick="saveTask()" style="width:100%">保存</button>
-            <button class="btn" onclick="closeModal('taskModal')" style="width:100%; margin-top:10px;">キャンセル</button>
-        </div>
+        <button class="btn btn-blue" style="width:200px; height:70px; font-size:1.5rem;" onclick="stopTimer(true)">おわった！</button>
+        <button class="btn" style="margin-top:20px; background:#eee" onclick="stopTimer(false)">とめる</button>
     </div>
 
     <script>
+        // ★ここにGoogle Apps ScriptでコピーしたURLを貼り付けてください
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw4urYzD0CKZUCo4Se1FwZnMP8fiZ2U05Sb7s6y-RACtzMcY-NItVhCOYU4zPJTD48z/exec";
+
         const defaultTasks = [
             {id: 1, name: "宿題", time: 45, icon: "book", done: false, elapsed: 0},
             {id: 2, name: "お風呂を沸かす", time: 10, icon: "bath", done: false, elapsed: 0},
@@ -132,10 +73,8 @@
             {id: 8, name: "ゲーム", time: 120, icon: "gamepad", done: false, elapsed: 0}
         ];
 
-        let tasks = JSON.parse(localStorage.getItem('tadaima_v44_tasks')) || defaultTasks;
-        let bedtime = localStorage.getItem('tadaima_v44_bedtime') || "21:00";
-        let timerState = JSON.parse(localStorage.getItem('tadaima_v44_timer_state')) || null; // {taskId, startTime, baseElapsed}
-        let editId = null;
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v45_tasks')) || defaultTasks;
+        let timerState = JSON.parse(localStorage.getItem('tadaima_v45_timer_state')) || null;
 
         function updateClock() {
             const now = new Date();
@@ -145,108 +84,70 @@
             document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${h}deg)`;
             document.getElementById('min-hand').style.transform = `translateX(-50%) rotate(${m}deg)`;
             document.getElementById('sec-hand').style.transform = `translateX(-50%) rotate(${s}deg)`;
-            
             if(timerState) updateTimerLogic();
         }
 
         function render() {
             const list = document.getElementById('task-list'); list.innerHTML = '';
-            let total = 0;
             tasks.forEach(t => {
-                if (!t.done) total += parseInt(t.time);
                 const li = document.createElement('li');
                 li.className = `task-card ${t.done ? 'checked' : ''}`;
                 li.innerHTML = `
-                    <div class="drag-handle edit-only" style="margin-right:10px"><i class="fas fa-bars"></i></div>
-                    <button class="btn timer-btn" onclick="startTimer(${t.id})" style="margin-right:10px; background:#e0f2fe; color:#3b82f6"><i class="fas fa-play"></i></button>
+                    <button class="btn" onclick="startTimer(${t.id})" style="margin-right:15px; background:#e0f2fe; color:#3b82f6"><i class="fas fa-play"></i></button>
                     <div class="task-icon"><i class="fas fa-${t.icon}"></i></div>
-                    <div style="flex:1"><span style="font-weight:bold;display:block">${t.name}</span><small>目標: ${t.time}分 ${t.elapsed > 0 ? ' ✨'+Math.floor(t.elapsed/60)+'分経過':''}</small></div>
+                    <div style="flex:1"><b>${t.name}</b><br><small>目標:${t.time}分 ${t.elapsed > 0 ? '✨記録あり':''}</small></div>
                     <div class="check-circle" onclick="toggleCheck(${t.id})">${t.done ? '✓' : ''}</div>
-                    <div class="edit-only"><i class="fas fa-edit" onclick="openTaskModal(${t.id})"></i> <i class="fas fa-trash" onclick="deleteTask(${t.id})"></i></div>
                 `;
                 list.appendChild(li);
             });
-            calculateStatus(total);
-            localStorage.setItem('tadaima_v44_tasks', JSON.stringify(tasks));
+            localStorage.setItem('tadaima_v45_tasks', JSON.stringify(tasks));
         }
 
         function startTimer(id) {
             const task = tasks.find(x => x.id === id);
-            if(task.done) return;
             timerState = { taskId: id, startTime: Date.now(), baseElapsed: task.elapsed };
-            saveState();
+            localStorage.setItem('tadaima_v45_timer_state', JSON.stringify(timerState));
             document.getElementById('timer-overlay').style.display = 'flex';
             document.getElementById('timer-task-name').innerText = task.name;
         }
 
         function updateTimerLogic() {
             const task = tasks.find(x => x.id === timerState.taskId);
-            if(!task) return;
-            const currentSession = Math.floor((Date.now() - timerState.startTime) / 1000);
-            const totalElapsed = timerState.baseElapsed + currentSession;
-            
+            const totalElapsed = timerState.baseElapsed + Math.floor((Date.now() - timerState.startTime) / 1000);
             const m = Math.floor(totalElapsed / 60); const s = totalElapsed % 60;
             document.getElementById('timer-main').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-            
-            const remain = (task.time * 60) - totalElapsed;
-            const diffText = document.getElementById('timer-diff-text');
-            if(remain >= 0) {
-                diffText.innerText = `残り 約${Math.ceil(remain/60)}分`; diffText.style.color = "#3b82f6";
-            } else {
-                diffText.innerText = `${Math.floor(Math.abs(remain)/60)}分 オーバー！`; diffText.style.color = "#4cd964";
-            }
+        }
+
+        // スプレッドシートに送る関数
+        async function sendLogToGAS(taskName, goalTime, elapsedTime) {
+            if (!GAS_URL || GAS_URL.includes("ここにメモ")) return;
+            try {
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors", // GASへの簡易送信
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ taskName, goalTime, elapsedTime })
+                });
+            } catch (e) { console.error("Log failed", e); }
         }
 
         function stopTimer(isComplete) {
             if(!timerState) return;
             const task = tasks.find(x => x.id === timerState.taskId);
-            const currentSession = Math.floor((Date.now() - timerState.startTime) / 1000);
-            task.elapsed = timerState.baseElapsed + currentSession;
-            if(isComplete) task.done = true;
-            
+            const elapsed = timerState.baseElapsed + Math.floor((Date.now() - timerState.startTime) / 1000);
+            task.elapsed = elapsed;
+            if(isComplete) {
+                task.done = true;
+                // ★ここでスプレッドシートに送信！
+                sendLogToGAS(task.name, task.time, elapsed);
+            }
             timerState = null;
-            saveState();
+            localStorage.removeItem('tadaima_v45_timer_state');
             document.getElementById('timer-overlay').style.display = 'none';
             render();
         }
 
-        function saveState() { localStorage.setItem('tadaima_v44_timer_state', JSON.stringify(timerState)); }
-
-        function calculateStatus(total) {
-            const now = new Date(); const [bH, bM] = bedtime.split(':').map(Number);
-            const bedDate = new Date(); bedDate.setHours(bH, bM, 0);
-            if (bedDate < now) bedDate.setDate(bedDate.getDate() + 1);
-            const diffMin = Math.floor((bedDate - now) / 60000);
-            const freeMin = diffMin - total;
-            const bar = document.getElementById('progress-bar');
-            bar.style.width = Math.min(100, (total / diffMin) * 100) + "%";
-            bar.style.background = freeMin < 0 ? "var(--danger)" : "var(--main-blue)";
-            document.getElementById('stat-total').innerText = `合計: ${total}分`;
-            document.getElementById('stat-free').innerText = `自由: ${freeMin}分`;
-            document.getElementById('bed-val').innerText = bedtime;
-        }
-
-        function toggleEditMode() { document.body.classList.toggle('edit-mode'); }
-        function openTaskModal(id=null) { 
-            editId = id; 
-            if(id){ const t=tasks.find(x=>x.id===id); document.getElementById('in-name').value=t.name; document.getElementById('in-time').value=t.time; }
-            else { document.getElementById('in-name').value=''; document.getElementById('in-time').value=''; }
-            document.getElementById('taskModal').style.display='flex'; 
-        }
-        function closeModal(id){ document.getElementById(id).style.display='none'; }
-        function saveTask() {
-            const n = document.getElementById('in-name').value; const t = document.getElementById('in-time').value;
-            if(!n || !t) return;
-            if(editId){ const tk=tasks.find(x=>x.id===editId); tk.name=n; tk.time=t; tk.icon=document.getElementById('in-icon').value; }
-            else{ tasks.push({id:Date.now(), name:n, time:t, icon:document.getElementById('in-icon').value, done:false, elapsed:0}); }
-            closeModal('taskModal'); render();
-        }
         function toggleCheck(id){ const t=tasks.find(x=>x.id===id); t.done=!t.done; render(); }
-        function deleteTask(id){ tasks=tasks.filter(x=>x.id!==id); render(); }
-        function resetAllTasks(){ if(confirm('リセットしますか？')){ tasks.forEach(t=>{t.done=false;t.elapsed=0}); render(); } }
-
-        // 初期化時にタイマーが動いてたか確認
-        if(timerState) document.getElementById('timer-overlay').style.display = 'flex';
 
         setInterval(updateClock, 1000);
         render();
