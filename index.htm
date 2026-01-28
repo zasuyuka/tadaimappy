@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー🌇V4.1</title>
+    <title>ただいまっぴー🌇V4.2</title>
     
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
     <link rel="icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
@@ -16,7 +16,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
-        /* スタイルはV4.1と同じ（省略せずに全て含まれています） */
         :root {
             --main-blue: #3b82f6;
             --bg-color: #f3f8ff;
@@ -70,7 +69,7 @@
         .status-info { display: flex; justify-content: space-between; margin-top: 12px; font-size: 0.95rem; font-weight: bold; }
 
         .list-container { width: 100%; max-width: 600px; }
-        .list-tools { display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 15px; }
+        .list-tools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
         .task-card {
             background: white; margin-bottom: 12px; padding: 12px 15px;
@@ -112,12 +111,14 @@
         }
         .checked .check-circle { background: var(--success); border-color: var(--success); color: white; }
 
-        .edit-only { display: none; margin-left: auto; gap: 10px; }
+        .edit-only { display: none; margin-left: auto; gap: 15px; }
         body.edit-mode .edit-only { display: flex; }
         body.edit-mode .check-circle { display: none; }
 
         .btn { border: none; padding: 12px 20px; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         .btn-blue { background: var(--main-blue); color: white; }
+        .btn-reset { background: #fee2e2; color: var(--danger); font-size: 0.85rem; display: none; }
+        body.edit-mode .btn-reset { display: block; }
 
         /* タイマー画面 */
         #timer-overlay {
@@ -137,10 +138,10 @@
 <body>
 
     <div class="header">
-        <h1>ただいまっぴー <small style="font-size: 0.8rem; vertical-align: middle;">V4.1</small></h1>
+        <h1>ただいまっぴー <small style="font-size: 0.8rem; vertical-align: middle;">V4.2</small></h1>
     </div>
 
-    <div class="dashboard">
+    <div class="dashboard" id="main-dashboard">
         <div class="time-row">
             <div class="time-box">
                 <div class="time-label">今の時間</div>
@@ -161,7 +162,7 @@
             <div class="time-box">
                 <div class="time-label">寝る予定</div>
                 <div class="time-value" id="bed-val" style="color:var(--danger)">21:00</div>
-                <button style="background:#e0f2fe; color:var(--main-blue); border:none; border-radius:8px; font-size:0.8rem; padding: 5px 12px;" onclick="openBedtimeModal()">設定変更</button>
+                <button style="background:#e0f2fe; color:var(--main-blue); border:none; border-radius:8px; font-size:0.8rem; padding: 5px 12px; margin-top:5px;" onclick="openBedtimeModal()">設定変更</button>
             </div>
         </div>
 
@@ -178,8 +179,11 @@
 
     <div class="list-container">
         <div class="list-tools">
-            <button class="btn" style="background:var(--warning); color:white;" id="toggle-edit-btn" onclick="toggleEditMode()">✏️ 編集モード</button>
-            <button class="btn btn-blue" onclick="openTaskModal()">＋ 追加</button>
+            <button class="btn-reset btn" onclick="resetAllTasks()">🔄 全部リセット</button>
+            <div style="display:flex; gap:10px; margin-left:auto;">
+                <button class="btn" style="background:var(--warning); color:white;" id="toggle-edit-btn" onclick="toggleEditMode()">✏️ 編集モード</button>
+                <button class="btn btn-blue" onclick="openTaskModal()">＋ 追加</button>
+            </div>
         </div>
         <ul id="task-list" style="padding:0; list-style:none;"></ul>
     </div>
@@ -197,7 +201,7 @@
 
     <div id="taskModal" class="modal">
         <div class="modal-content">
-            <h3>予定の追加</h3>
+            <h3 id="modal-title">予定の追加</h3>
             <input type="text" id="in-name" placeholder="何をする？">
             <input type="number" id="in-time" placeholder="目標の時間（分）">
             <select id="in-icon">
@@ -212,7 +216,7 @@
                 <option value="trash">🗑️ お片付け</option>
             </select>
             <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn btn-blue" style="flex:1" onclick="saveTask()">保存する</button>
+                <button class="btn btn-blue" id="btn-save" style="flex:1" onclick="saveTask()">保存する</button>
                 <button class="btn" style="flex:1; background:#eee;" onclick="closeModal('taskModal')">やめる</button>
             </div>
         </div>
@@ -233,14 +237,33 @@
     </div>
 
     <script>
-        // データの保存キーをV4.1用に変更
-        let tasks = JSON.parse(localStorage.getItem('tadaima_v41_tasks')) || [
+        // データ初期化
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v42_tasks')) || [
             {id: 1, name: "宿題", time: 30, icon: "pencil-alt", done: false, elapsed: 0}
         ];
-        let bedtime = localStorage.getItem('tadaima_v41_bedtime') || "21:00";
+        let bedtime = localStorage.getItem('tadaima_v42_bedtime') || "21:00";
         let editId = null;
         let timerInterval = null;
         let activeTaskId = null;
+
+        // 日付をまたいだ時のリセット処理
+        function checkDayChange() {
+            const lastDate = localStorage.getItem('tadaima_last_date');
+            const today = new Date().toLocaleDateString();
+            if (lastDate && lastDate !== today) {
+                resetAllTasks(false); // 日付変更時は確認なしでリセット
+            }
+            localStorage.setItem('tadaima_last_date', today);
+        }
+
+        function resetAllTasks(confirmNeeded = true) {
+            if (confirmNeeded && !confirm('今日のがんばった記録とチェックをすべてリセットしますか？')) return;
+            tasks.forEach(t => {
+                t.done = false;
+                t.elapsed = 0;
+            });
+            render();
+        }
 
         function formatTimeSpan(totalMin) {
             const h = Math.floor(totalMin / 60);
@@ -281,7 +304,7 @@
                 list.appendChild(li);
             });
             calculateStatus(total);
-            localStorage.setItem('tadaima_v41_tasks', JSON.stringify(tasks));
+            localStorage.setItem('tadaima_v42_tasks', JSON.stringify(tasks));
         }
 
         function startTimer(id) {
@@ -358,63 +381,79 @@
             document.getElementById('bed-val').innerText = bedtime;
         }
 
-        function toggleCheck(id) { const t = tasks.find(x => x.id === id); t.done = !t.done; render(); }
+        function toggleCheck(id) { 
+            const t = tasks.find(x => x.id === id); 
+            if(t) { t.done = !t.done; render(); }
+        }
+
         function toggleEditMode() { 
             document.body.classList.toggle('edit-mode');
             document.getElementById('toggle-edit-btn').innerText = document.body.classList.contains('edit-mode') ? "✅ 完了" : "✏️ 編集モード";
         }
+
         function openTaskModal(id = null) {
             editId = id;
             if (id) {
                 const t = tasks.find(x => x.id === id);
+                document.getElementById('modal-title').innerText = "予定を直す";
                 document.getElementById('in-name').value = t.name;
                 document.getElementById('in-time').value = t.time;
                 document.getElementById('in-icon').value = t.icon;
             } else {
+                document.getElementById('modal-title').innerText = "予定の追加";
                 document.getElementById('in-name').value = '';
                 document.getElementById('in-time').value = '';
+                document.getElementById('in-icon').selectedIndex = 0;
             }
             document.getElementById('taskModal').style.display = 'flex';
         }
-        function openBedtimeModal() { document.getElementById('bedtimeModal').style.display = 'flex'; }
+
+        function openBedtimeModal() { 
+            const [h, m] = bedtime.split(':');
+            document.getElementById('bed-h').value = h;
+            document.getElementById('bed-m').value = m;
+            document.getElementById('bedtimeModal').style.display = 'flex'; 
+        }
         function closeModal(mId) { document.getElementById(mId).style.display = 'none'; }
 
         function saveTask() {
             const n = document.getElementById('in-name').value;
             const t = document.getElementById('in-time').value;
             const i = document.getElementById('in-icon').value;
-            if (!n || !t) return;
+            if (!n || !t) { alert('なまえと時間を入力してね！'); return; }
+            
             if (editId) {
                 const task = tasks.find(x => x.id === editId);
-                task.name = n; task.time = t; task.icon = i;
+                if(task) { task.name = n; task.time = t; task.icon = i; }
             } else {
                 tasks.push({id: Date.now(), name: n, time: t, icon: i, done: false, elapsed: 0});
             }
-            closeModal('taskModal'); render();
+            closeModal('taskModal');
+            render();
         }
 
         function saveBedtime() {
             const h = String(document.getElementById('bed-h').value || 0).padStart(2, '0');
             const m = String(document.getElementById('bed-m').value || 0).padStart(2, '0');
             bedtime = `${h}:${m}`;
-            localStorage.setItem('tadaima_v41_bedtime', bedtime);
+            localStorage.setItem('tadaima_v42_bedtime', bedtime);
             closeModal('bedtimeModal'); render();
         }
 
-        function deleteTask(id) { if(confirm('削除しますか？')) { tasks = tasks.filter(x => x.id !== id); render(); } }
+        function deleteTask(id) { if(confirm('消してもいい？')) { tasks = tasks.filter(x => x.id !== id); render(); } }
 
         new Sortable(document.getElementById('task-list'), { 
             handle: '.drag-handle', animation: 150, onEnd: () => {
                 const newTasks = [];
-                document.querySelectorAll('.task-card').forEach(card => {
-                    const title = card.querySelector('.task-title').innerText;
-                    const found = tasks.find(x => x.name === title);
+                document.querySelectorAll('.task-title').forEach(el => {
+                    const found = tasks.find(x => x.name === el.innerText);
                     if(found) newTasks.push(found);
                 });
                 tasks = newTasks; render();
             }
         });
 
+        checkDayChange();
         setInterval(updateClock, 1000);
         updateClock();
         render();
