@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー V4.7</title>
+    <title>ただいまっぴー V4.8</title>
     
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
     <link rel="icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
@@ -47,7 +47,6 @@
         .modal-content { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; }
         .modal-content input, .modal-content select { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
 
-        /* V4.7 新機能: 今日のがんばりリスト */
         .summary-section { width: 100%; max-width: 600px; margin-top: 30px; padding: 20px; background: #fff; border-radius: 24px; box-sizing: border-box; }
         .summary-title { font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: #64748b; }
         .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 0.9rem; }
@@ -55,7 +54,7 @@
 </head>
 <body>
 
-    <h1>ただいまっぴー <small>V4.7</small></h1>
+    <h1>ただいまっぴー <small>V4.8</small></h1>
 
     <div class="dashboard">
         <div class="time-row">
@@ -68,8 +67,8 @@
             <div style="text-align:center">寝る<br><span class="time-value" id="bed-val">21:00</span></div>
         </div>
         <div class="progress-wrapper"><div id="progress-bar"></div></div>
-        <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:bold; font-size:0.9rem;">
-            <span id="stat-total">合計: --分</span><span id="stat-free">自由: --分</span>
+        <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:bold; font-size:1.1rem;">
+            <span id="stat-total">合計: --</span><span id="stat-free">自由: --</span>
         </div>
     </div>
 
@@ -112,23 +111,34 @@
     </div>
 
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyJL8IZONFaSpzh3DUo3nmPNGIwe5uTXP8t5f-lzLOEaS_D6wZaYfga46qaL9hz_Q31/exec"; // ★URLを貼り付けてください
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyJL8IZONFaSpzh3DUo3nmPNGIwe5uTXP8t5f-lzLOEaS_D6wZaYfga46qaL9hz_Q31/exec"; 
 
         const defaultTasks = [
-            {id: 1, name: "宿題", time: 45, icon: "book", done: false, elapsed: 0, log: []},
-            {id: 2, name: "お風呂を沸かす", time: 10, icon: "bath", done: false, elapsed: 0, log: []},
-            {id: 3, name: "お風呂に入る", time: 30, icon: "bath", done: false, elapsed: 0, log: []},
-            {id: 4, name: "歯磨き", time: 3, icon: "tooth", done: false, elapsed: 0, log: []},
-            {id: 5, name: "布団を畳む", time: 7, icon: "bed", done: false, elapsed: 0, log: []},
-            {id: 6, name: "洗濯物をしまう", time: 10, icon: "shirt", done: false, elapsed: 0, log: []},
-            {id: 7, name: "ホームページ", time: 20, icon: "gamepad", done: false, elapsed: 0, log: []},
-            {id: 8, name: "ゲーム", time: 120, icon: "gamepad", done: false, elapsed: 0, log: []}
+            {id: 1, name: "宿題", time: 45, icon: "book", done: false, elapsed: 0},
+            {id: 2, name: "お風呂を沸かす", time: 10, icon: "bath", done: false, elapsed: 0},
+            {id: 3, name: "お風呂に入る", time: 30, icon: "bath", done: false, elapsed: 0},
+            {id: 4, name: "歯磨き", time: 3, icon: "tooth", done: false, elapsed: 0},
+            {id: 5, name: "布団を畳む", time: 7, icon: "bed", done: false, elapsed: 0},
+            {id: 6, name: "洗濯物をしまう", time: 10, icon: "shirt", done: false, elapsed: 0},
+            {id: 7, name: "ホームページ", time: 20, icon: "gamepad", done: false, elapsed: 0},
+            {id: 8, name: "ゲーム", time: 120, icon: "gamepad", done: false, elapsed: 0}
         ];
 
-        let tasks = JSON.parse(localStorage.getItem('tadaima_v47_tasks')) || defaultTasks;
-        let bedtime = localStorage.getItem('tadaima_v47_bedtime') || "21:00";
-        let timerState = JSON.parse(localStorage.getItem('tadaima_v47_timer_state')) || null;
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v48_tasks')) || defaultTasks;
+        let bedtime = localStorage.getItem('tadaima_v48_bedtime') || "21:00";
+        let timerState = JSON.parse(localStorage.getItem('tadaima_v48_timer_state')) || null;
         let editId = null;
+
+        // 【新機能】分を「●時間●分」に変換する関数
+        function formatHM(minutes) {
+            const m = Math.abs(minutes);
+            const h = Math.floor(m / 60);
+            const min = m % 60;
+            let res = "";
+            if (h > 0) res += h + "時間";
+            res += min + "分";
+            return (minutes < 0 ? "-" : "") + res;
+        }
 
         function updateClock() {
             const now = new Date();
@@ -153,7 +163,7 @@
                     hasSummary = true;
                     const logDiv = document.createElement('div');
                     logDiv.className = 'log-item';
-                    logDiv.innerHTML = `<span>${t.name}</span> <span>${Math.floor(t.elapsed/60)}分${t.elapsed%60}秒</span>`;
+                    logDiv.innerHTML = `<span>${t.name}</span> <span>${formatHM(Math.floor(t.elapsed/60))}</span>`;
                     summaryList.appendChild(logDiv);
                 }
 
@@ -162,7 +172,7 @@
                 li.innerHTML = `
                     <button class="btn timer-btn" onclick="startTimer(${t.id})" style="margin-right:15px; background:#e0f2fe; color:#3b82f6; width:45px; height:45px; border-radius:50%;"><i class="fas fa-play"></i></button>
                     <div class="task-icon"><i class="fas fa-${t.icon}"></i></div>
-                    <div style="flex:1"><b>${t.name}</b><br><small>目標:${t.time}分 ${t.elapsed > 0 ? '✨済':''}</small></div>
+                    <div style="flex:1"><b>${t.name}</b><br><small>目標:${formatHM(t.time)}</small></div>
                     <div class="check-circle" onclick="toggleCheck(${t.id})">${t.done ? '✓' : ''}</div>
                     <div class="edit-controls">
                         <i class="fas fa-edit" onclick="openTaskModal(${t.id})" style="color:var(--main-blue)"></i>
@@ -174,14 +184,14 @@
 
             document.getElementById('summary-section').style.display = hasSummary ? 'block' : 'none';
             calculateStatus(totalRemaining);
-            localStorage.setItem('tadaima_v47_tasks', JSON.stringify(tasks));
+            localStorage.setItem('tadaima_v48_tasks', JSON.stringify(tasks));
         }
 
         function startTimer(id) {
             const task = tasks.find(x => x.id === id);
             if(task.done) return;
             timerState = { taskId: id, startTime: Date.now(), baseElapsed: task.elapsed };
-            localStorage.setItem('tadaima_v47_timer_state', JSON.stringify(timerState));
+            localStorage.setItem('tadaima_v48_timer_state', JSON.stringify(timerState));
             document.getElementById('timer-overlay').style.display = 'flex';
             document.getElementById('timer-task-name').innerText = task.name;
         }
@@ -194,9 +204,9 @@
             const remain = (task.time * 60) - totalElapsed;
             const diffText = document.getElementById('timer-diff-text');
             if(remain >= 0) {
-                diffText.innerText = `のこり 約 ${Math.ceil(remain/60)}分`; diffText.style.color = "var(--main-blue)";
+                diffText.innerText = `のこり 約 ${formatHM(Math.ceil(remain/60))}`; diffText.style.color = "var(--main-blue)";
             } else {
-                diffText.innerText = `${Math.floor(Math.abs(remain)/60)}分 オーバー！`; diffText.style.color = "var(--success)";
+                diffText.innerText = `${formatHM(Math.floor(Math.abs(remain)/60))} オーバー！`; diffText.style.color = "var(--danger)";
             }
         }
 
@@ -205,14 +215,12 @@
             const task = tasks.find(x => x.id === timerState.taskId);
             const currentSession = Math.floor((Date.now() - timerState.startTime) / 1000);
             task.elapsed = timerState.baseElapsed + currentSession;
-
             if(isComplete) {
                 task.done = true;
                 sendLogToGAS(task.name, task.time, task.elapsed);
             }
-            
             timerState = null;
-            localStorage.removeItem('tadaima_v47_timer_state');
+            localStorage.removeItem('tadaima_v48_timer_state');
             document.getElementById('timer-overlay').style.display = 'none';
             render();
         }
@@ -231,8 +239,9 @@
             const bar = document.getElementById('progress-bar');
             bar.style.width = Math.min(100, (totalRemaining / diffMin) * 100) + "%";
             bar.style.backgroundColor = freeMin < 0 ? "var(--danger)" : "var(--main-blue)";
-            document.getElementById('stat-total').innerText = `合計: ${totalRemaining}分`;
-            document.getElementById('stat-free').innerText = `自由: ${freeMin}分`;
+            document.getElementById('stat-total').innerText = `合計: ${formatHM(totalRemaining)}`;
+            document.getElementById('stat-free').innerText = `自由: ${formatHM(freeMin)}`;
+            document.getElementById('bed-val').innerText = bedtime;
         }
 
         function toggleEditMode() {
@@ -257,7 +266,6 @@
         }
 
         function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
-
         function saveTask() {
             const n = document.getElementById('in-name').value;
             const t = document.getElementById('in-time').value;
@@ -265,13 +273,12 @@
             if(!n || !t) return;
             if(editId) {
                 const tk = tasks.find(x => x.id === editId);
-                tk.name = n; tk.time = t; tk.icon = i;
+                tk.name = n; tk.time = parseInt(t); tk.icon = i;
             } else {
-                tasks.push({id: Date.now(), name: n, time: t, icon: i, done: false, elapsed: 0});
+                tasks.push({id: Date.now(), name: n, time: parseInt(t), icon: i, done: false, elapsed: 0});
             }
             closeModal(); render();
         }
-
         function deleteTask(id) { if(confirm('消してもいい？')) { tasks = tasks.filter(x => x.id !== id); render(); } }
         function toggleCheck(id) { const t = tasks.find(x => x.id === id); t.done = !t.done; if(!t.done) t.elapsed = 0; render(); }
 
