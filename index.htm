@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ただいまっぴー V4.8</title>
+    <title>ただいまっぴー V4.9</title>
     
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
     <link rel="icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
         :root { --main-blue: #3b82f6; --bg-color: #f3f8ff; --card-white: #ffffff; --text-main: #2c3e50; --success: #4cd964; --danger: #ff3b30; --warning: #f1c40f; }
@@ -18,6 +19,8 @@
         .dashboard { background: var(--card-white); width: 100%; max-width: 600px; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px; box-sizing: border-box; }
         .time-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .time-value { font-size: 1.8rem; font-weight: 800; color: var(--main-blue); }
+        .bedtime-edit { cursor: pointer; border-bottom: 2px dashed var(--main-blue); } /* 寝る時間をタップ可能に */
+        
         .analog-clock { width: 100px; height: 100px; background: white; border: 4px solid #333; border-radius: 50%; position: relative; }
         .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; background: #333; border-radius: 4px; }
         .hour-hand { width: 5px; height: 25%; } .min-hand { width: 3px; height: 40%; } .sec-hand { width: 1.5px; height: 45%; background: var(--danger); }
@@ -26,8 +29,10 @@
         #progress-bar { height: 100%; width: 0%; transition: width 0.5s; background: var(--main-blue); }
 
         .list-container { width: 100%; max-width: 600px; }
-        .task-card { background: white; margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02); min-height: 80px; box-sizing: border-box; position: relative; }
+        .task-card { background: white; margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02); min-height: 80px; box-sizing: border-box; cursor: grab; }
+        .task-card:active { cursor: grabbing; }
         .task-card.checked { opacity: 0.6; background: #f8fafc; }
+        
         .task-icon { width: 50px; height: 50px; background: #f0f7ff; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; color: var(--main-blue); margin-right: 15px; }
         .check-circle { width: 45px; height: 45px; border: 2px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; flex-shrink: 0; }
         .checked .check-circle { background: var(--success); border-color: var(--success); color: white; }
@@ -36,25 +41,21 @@
         .timer-display { font-size: 6rem; font-weight: 800; margin: 20px 0; font-variant-numeric: tabular-nums; }
 
         .btn { border: none; padding: 12px 20px; border-radius: 15px; font-weight: bold; cursor: pointer; transition: transform 0.1s; }
-        .btn:active { transform: scale(0.95); }
         .btn-blue { background: var(--main-blue); color: white; }
         
         .edit-controls { display: none; margin-left: auto; gap: 15px; font-size: 1.3rem; }
         body.edit-mode .edit-controls { display: flex; }
         body.edit-mode .check-circle, body.edit-mode .timer-btn { display: none; }
+        .sortable-ghost { opacity: 0.3; background: #dbeafe; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3000; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; }
         .modal-content input, .modal-content select { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; font-size: 1rem; box-sizing: border-box; }
-
-        .summary-section { width: 100%; max-width: 600px; margin-top: 30px; padding: 20px; background: #fff; border-radius: 24px; box-sizing: border-box; }
-        .summary-title { font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; color: #64748b; }
-        .log-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <h1>ただいまっぴー <small>V4.8</small></h1>
+    <h1>ただいまっぴー <small>V4.9</small></h1>
 
     <div class="dashboard">
         <div class="time-row">
@@ -64,7 +65,7 @@
                 <div class="hand min-hand" id="min-hand"></div>
                 <div class="hand sec-hand" id="sec-hand"></div>
             </div>
-            <div style="text-align:center">寝る<br><span class="time-value" id="bed-val">21:00</span></div>
+            <div style="text-align:center" onclick="editBedtime()">寝る<br><span class="time-value bedtime-edit" id="bed-val">21:00</span></div>
         </div>
         <div class="progress-wrapper"><div id="progress-bar"></div></div>
         <div style="display:flex; justify-content:space-between; margin-top:10px; font-weight:bold; font-size:1.1rem;">
@@ -78,11 +79,6 @@
             <button class="btn btn-blue" onclick="openTaskModal()">＋ 追加</button>
         </div>
         <ul id="task-list" style="padding:0; list-style:none"></ul>
-    </div>
-
-    <div class="summary-section" id="summary-section" style="display:none;">
-        <div class="summary-title"><i class="fas fa-flag-checkered"></i> 今日おわったこと</div>
-        <div id="summary-list"></div>
     </div>
 
     <div id="timer-overlay">
@@ -124,20 +120,16 @@
             {id: 8, name: "ゲーム", time: 120, icon: "gamepad", done: false, elapsed: 0}
         ];
 
-        let tasks = JSON.parse(localStorage.getItem('tadaima_v48_tasks')) || defaultTasks;
-        let bedtime = localStorage.getItem('tadaima_v48_bedtime') || "21:00";
-        let timerState = JSON.parse(localStorage.getItem('tadaima_v48_timer_state')) || null;
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v49_tasks')) || defaultTasks;
+        let bedtime = localStorage.getItem('tadaima_v49_bedtime') || "21:00";
+        let timerState = JSON.parse(localStorage.getItem('tadaima_v49_timer_state')) || null;
         let editId = null;
 
-        // 【新機能】分を「●時間●分」に変換する関数
         function formatHM(minutes) {
             const m = Math.abs(minutes);
-            const h = Math.floor(m / 60);
-            const min = m % 60;
-            let res = "";
-            if (h > 0) res += h + "時間";
-            res += min + "分";
-            return (minutes < 0 ? "-" : "") + res;
+            const h = Math.floor(m / 60); const min = m % 60;
+            let res = h > 0 ? h + "時間" : "";
+            return (minutes < 0 ? "-" : "") + res + min + "分";
         }
 
         function updateClock() {
@@ -153,26 +145,16 @@
 
         function render() {
             const list = document.getElementById('task-list'); list.innerHTML = '';
-            const summaryList = document.getElementById('summary-list'); summaryList.innerHTML = '';
             let totalRemaining = 0;
-            let hasSummary = false;
-
             tasks.forEach(t => {
                 if(!t.done) totalRemaining += parseInt(t.time);
-                else {
-                    hasSummary = true;
-                    const logDiv = document.createElement('div');
-                    logDiv.className = 'log-item';
-                    logDiv.innerHTML = `<span>${t.name}</span> <span>${formatHM(Math.floor(t.elapsed/60))}</span>`;
-                    summaryList.appendChild(logDiv);
-                }
-
                 const li = document.createElement('li');
                 li.className = `task-card ${t.done ? 'checked' : ''}`;
+                li.dataset.id = t.id; // 並び替え用
                 li.innerHTML = `
                     <button class="btn timer-btn" onclick="startTimer(${t.id})" style="margin-right:15px; background:#e0f2fe; color:#3b82f6; width:45px; height:45px; border-radius:50%;"><i class="fas fa-play"></i></button>
                     <div class="task-icon"><i class="fas fa-${t.icon}"></i></div>
-                    <div style="flex:1"><b>${t.name}</b><br><small>目標:${formatHM(t.time)}</small></div>
+                    <div style="flex:1"><b>${t.name}</b><br><small>目標:${formatHM(t.time)} ${t.elapsed > 0 ? ' (現在:'+formatHM(Math.floor(t.elapsed/60))+')' : ''}</small></div>
                     <div class="check-circle" onclick="toggleCheck(${t.id})">${t.done ? '✓' : ''}</div>
                     <div class="edit-controls">
                         <i class="fas fa-edit" onclick="openTaskModal(${t.id})" style="color:var(--main-blue)"></i>
@@ -181,19 +163,22 @@
                 `;
                 list.appendChild(li);
             });
-
-            document.getElementById('summary-section').style.display = hasSummary ? 'block' : 'none';
             calculateStatus(totalRemaining);
-            localStorage.setItem('tadaima_v48_tasks', JSON.stringify(tasks));
+            localStorage.setItem('tadaima_v49_tasks', JSON.stringify(tasks));
         }
 
+        // 計測の継続機能を搭載したスタート
         function startTimer(id) {
             const task = tasks.find(x => x.id === id);
-            if(task.done) return;
+            // 完了済みなら未完了に戻して再開
+            if(task.done) {
+                task.done = false;
+            }
             timerState = { taskId: id, startTime: Date.now(), baseElapsed: task.elapsed };
-            localStorage.setItem('tadaima_v48_timer_state', JSON.stringify(timerState));
+            localStorage.setItem('tadaima_v49_timer_state', JSON.stringify(timerState));
             document.getElementById('timer-overlay').style.display = 'flex';
             document.getElementById('timer-task-name').innerText = task.name;
+            render();
         }
 
         function updateTimerLogic() {
@@ -213,14 +198,13 @@
         function stopTimer(isComplete) {
             if(!timerState) return;
             const task = tasks.find(x => x.id === timerState.taskId);
-            const currentSession = Math.floor((Date.now() - timerState.startTime) / 1000);
-            task.elapsed = timerState.baseElapsed + currentSession;
+            task.elapsed = timerState.baseElapsed + Math.floor((Date.now() - timerState.startTime) / 1000);
             if(isComplete) {
                 task.done = true;
                 sendLogToGAS(task.name, task.time, task.elapsed);
             }
             timerState = null;
-            localStorage.removeItem('tadaima_v48_timer_state');
+            localStorage.removeItem('tadaima_v49_timer_state');
             document.getElementById('timer-overlay').style.display = 'none';
             render();
         }
@@ -244,10 +228,35 @@
             document.getElementById('bed-val').innerText = bedtime;
         }
 
-        function toggleEditMode() {
-            document.body.classList.toggle('edit-mode');
-            document.getElementById('edit-toggle-btn').innerText = document.body.classList.contains('edit-mode') ? "✅ 完了" : "✏️ 編集";
+        // 寝る時間を編集
+        function editBedtime() {
+            const newTime = prompt("何時に寝る？ (例 21:00)", bedtime);
+            if(newTime && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(newTime)) {
+                bedtime = newTime;
+                localStorage.setItem('tadaima_v49_bedtime', bedtime);
+                render();
+            } else if(newTime) {
+                alert("21:00 のように入力してね");
+            }
         }
+
+        function toggleEditMode() {
+            const isEdit = document.body.classList.toggle('edit-mode');
+            document.getElementById('edit-toggle-btn').innerText = isEdit ? "✅ 完了" : "✏️ 編集";
+            sortable.option("disabled", !isEdit); // 編集モードの時だけ並び替え可能
+        }
+
+        // 並び替えの初期化
+        const sortable = new Sortable(document.getElementById('task-list'), {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            disabled: true,
+            onEnd: function() {
+                const newOrder = sortable.toArray();
+                tasks = newOrder.map(id => tasks.find(t => t.id == id));
+                render();
+            }
+        });
 
         function openTaskModal(id = null) {
             editId = id;
@@ -259,12 +268,10 @@
                 document.getElementById('in-icon').value = t.icon;
             } else {
                 document.getElementById('modal-title').innerText = "予定をいれる";
-                document.getElementById('in-name').value = '';
-                document.getElementById('in-time').value = '';
+                document.getElementById('in-name').value = ''; document.getElementById('in-time').value = '';
             }
             document.getElementById('taskModal').style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
         function saveTask() {
             const n = document.getElementById('in-name').value;
