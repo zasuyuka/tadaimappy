@@ -1,37 +1,175 @@
-<script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbyJL8IZONFaSpzh3DUo3nmPNGIwe5uTXP8t5f-lzLOEaS_D6wZaYfga46qaL9hz_Q31/exec"; 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ただいまっぴー V4.6</title>
+    
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
+    <link rel="icon" href="https://raw.githubusercontent.com/zasuyuka/tadaimappy/main/tadaimappy-icon.png">
 
-    // (中略：render, updateClockなどはそのまま)
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-    // ストップ時の処理を強化
-    async function stopTimer(isComplete) {
-        if(!timerState) return;
-        const task = tasks.find(x => x.id === timerState.taskId);
-        
-        // 実際の経過時間を計算
-        const elapsed = timerState.baseElapsed + Math.floor((Date.now() - timerState.startTime) / 1000);
-        task.elapsed = elapsed;
+    <style>
+        :root { --main-blue: #3b82f6; --bg-color: #f3f8ff; --card-white: #ffffff; --text-main: #2c3e50; --success: #4cd964; --danger: #ff3b30; --warning: #f1c40f; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; color: var(--text-main); }
+        .dashboard { background: var(--card-white); width: 100%; max-width: 600px; padding: 25px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px; box-sizing: border-box; }
+        .time-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .time-value { font-size: 1.8rem; font-weight: 800; color: var(--main-blue); }
+        .analog-clock { width: 110px; height: 110px; background: white; border: 4px solid #333; border-radius: 50%; position: relative; }
+        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; background: #333; border-radius: 4px; }
+        .hour-hand { width: 5px; height: 25%; } .min-hand { width: 3px; height: 40%; } .sec-hand { width: 1.5px; height: 45%; background: var(--danger); }
+        .progress-wrapper { height: 28px; background: #eee; border-radius: 14px; overflow: hidden; }
+        #progress-bar { height: 100%; width: 0%; transition: width 0.5s; background: var(--main-blue); }
+        .list-container { width: 100%; max-width: 600px; }
+        .task-card { background: white; margin-bottom: 12px; padding: 15px; border-radius: 18px; display: flex; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .task-card.checked { opacity: 0.5; }
+        .task-icon { width: 50px; height: 50px; background: #f0f7ff; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; color: var(--main-blue); margin-right: 15px; }
+        .check-circle { width: 45px; height: 45px; border: 2px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .checked .check-circle { background: var(--success); border-color: var(--success); color: white; }
+        #timer-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .timer-display { font-size: 6rem; font-weight: 800; }
+        .btn { border: none; padding: 12px 20px; border-radius: 15px; font-weight: bold; cursor: pointer; }
+        .btn-blue { background: var(--main-blue); color: white; }
+        .edit-only { display: none; margin-left: auto; gap: 10px; }
+        body.edit-mode .edit-only { display: flex; }
+        body.edit-mode .check-circle, body.edit-mode .timer-btn { display: none; }
+    </style>
+</head>
+<body>
 
-        if(isComplete) {
-            task.done = true;
-            // ログ送信（タスク名、目標時間、かかった秒数）
-            await sendLogToGAS(task.name, task.time, elapsed);
+    <h1>ただいまっぴー V4.6</h1>
+
+    <div class="dashboard">
+        <div class="time-row">
+            <div style="text-align:center">今<br><span class="time-value" id="now-val">--:--</span></div>
+            <div class="analog-clock">
+                <div class="hand hour-hand" id="hour-hand"></div>
+                <div class="hand min-hand" id="min-hand"></div>
+                <div class="hand sec-hand" id="sec-hand"></div>
+            </div>
+            <div style="text-align:center">寝る<br><span class="time-value" id="bed-val">21:00</span></div>
+        </div>
+        <div class="progress-wrapper"><div id="progress-bar"></div></div>
+    </div>
+
+    <div class="list-container">
+        <div style="display:flex; gap:10px; margin-bottom:15px; justify-content:flex-end;">
+            <button class="btn" style="background:var(--warning); color:white" onclick="toggleEditMode()">✏️ 編集</button>
+            <button class="btn btn-blue" onclick="openTaskModal()">＋ 追加</button>
+        </div>
+        <ul id="task-list" style="padding:0; list-style:none"></ul>
+    </div>
+
+    <div id="timer-overlay">
+        <h2 id="timer-task-name"></h2>
+        <div class="timer-display" id="timer-main">00:00</div>
+        <div id="timer-diff-text" style="font-size:1.5rem; margin-bottom:30px"></div>
+        <button class="btn btn-blue" style="width:200px; height:70px; font-size:1.5rem;" onclick="stopTimer(true)">おわった！</button>
+        <button class="btn" style="margin-top:20px; background:#eee" onclick="stopTimer(false)">とめる</button>
+    </div>
+
+    <script>
+        // ★ここにGoogle Apps Scriptで発行したURLを貼り付けてください
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyJL8IZONFaSpzh3DUo3nmPNGIwe5uTXP8t5f-lzLOEaS_D6wZaYfga46qaL9hz_Q31/exec";
+
+        // 画像に基づくデフォルトタスク
+        const defaultTasks = [
+            {id: 1, name: "宿題", time: 45, icon: "book", done: false, elapsed: 0},
+            {id: 2, name: "お風呂を沸かす", time: 10, icon: "bath", done: false, elapsed: 0},
+            {id: 3, name: "お風呂に入る", time: 30, icon: "bath", done: false, elapsed: 0},
+            {id: 4, name: "歯磨き", time: 3, icon: "tooth", done: false, elapsed: 0},
+            {id: 5, name: "布団を畳む", time: 7, icon: "bed", done: false, elapsed: 0},
+            {id: 6, name: "洗濯物をしまう", time: 10, icon: "shirt", done: false, elapsed: 0},
+            {id: 7, name: "ホームページ", time: 20, icon: "gamepad", done: false, elapsed: 0},
+            {id: 8, name: "ゲーム", time: 120, icon: "gamepad", done: false, elapsed: 0}
+        ];
+
+        let tasks = JSON.parse(localStorage.getItem('tadaima_v46_tasks')) || defaultTasks;
+        let timerState = JSON.parse(localStorage.getItem('tadaima_v46_timer_state')) || null;
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('now-val').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2,'0');
+            const h = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
+            const m = now.getMinutes() * 6; const s = now.getSeconds() * 6;
+            document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${h}deg)`;
+            document.getElementById('min-hand').style.transform = `translateX(-50%) rotate(${m}deg)`;
+            document.getElementById('sec-hand').style.transform = `translateX(-50%) rotate(${s}deg)`;
+            if(timerState) updateTimerLogic();
         }
-        
-        timerState = null;
-        localStorage.removeItem('tadaima_v44_timer_state');
-        document.getElementById('timer-overlay').style.display = 'none';
-        render();
-    }
 
-    async function sendLogToGAS(taskName, goalTime, elapsedTime) {
-        if (!GAS_URL || GAS_URL.includes("ここに")) return;
-        try {
-            await fetch(GAS_URL, {
-                method: "POST",
-                mode: "no-cors",
-                body: JSON.stringify({ taskName, goalTime, elapsedTime })
+        function render() {
+            const list = document.getElementById('task-list'); list.innerHTML = '';
+            tasks.forEach(t => {
+                const li = document.createElement('li');
+                li.className = `task-card ${t.done ? 'checked' : ''}`;
+                li.innerHTML = `
+                    <button class="btn timer-btn" onclick="startTimer(${t.id})" style="margin-right:15px; background:#e0f2fe; color:#3b82f6"><i class="fas fa-play"></i></button>
+                    <div class="task-icon"><i class="fas fa-${t.icon}"></i></div>
+                    <div style="flex:1"><b>${t.name}</b><br><small>目標:${t.time}分 ${t.elapsed > 0 ? '✨'+Math.floor(t.elapsed/60)+'分経過':''}</small></div>
+                    <div class="check-circle" onclick="toggleCheck(${t.id})">${t.done ? '✓' : ''}</div>
+                `;
+                list.appendChild(li);
             });
-        } catch (e) { console.error("送信失敗", e); }
-    }
-</script>
+            localStorage.setItem('tadaima_v46_tasks', JSON.stringify(tasks));
+        }
+
+        function startTimer(id) {
+            const task = tasks.find(x => x.id === id);
+            timerState = { taskId: id, startTime: Date.now(), baseElapsed: task.elapsed };
+            localStorage.setItem('tadaima_v46_timer_state', JSON.stringify(timerState));
+            document.getElementById('timer-overlay').style.display = 'flex';
+            document.getElementById('timer-task-name').innerText = task.name;
+        }
+
+        function updateTimerLogic() {
+            const task = tasks.find(x => x.id === timerState.taskId);
+            const totalElapsed = timerState.baseElapsed + Math.floor((Date.now() - timerState.startTime) / 1000);
+            const m = Math.floor(totalElapsed / 60); const s = totalElapsed % 60;
+            document.getElementById('timer-main').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        async function stopTimer(isComplete) {
+            if(!timerState) return;
+            const task = tasks.find(x => x.id === timerState.taskId);
+            const currentSession = Math.floor((Date.now() - timerState.startTime) / 1000);
+            const totalElapsed = timerState.baseElapsed + currentSession;
+            task.elapsed = totalElapsed;
+
+            if(isComplete) {
+                task.done = true;
+                // GASにログを送信（タスク名、目標、かかった秒数）
+                await sendLogToGAS(task.name, task.time, totalElapsed);
+            }
+            
+            timerState = null;
+            localStorage.removeItem('tadaima_v46_timer_state');
+            document.getElementById('timer-overlay').style.display = 'none';
+            render();
+        }
+
+        async function sendLogToGAS(taskName, goalTime, elapsedTime) {
+            if (!GAS_URL || GAS_URL.includes("ここにURL")) return;
+            try {
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({ taskName, goalTime, elapsedTime })
+                });
+            } catch (e) { console.error("Log error", e); }
+        }
+
+        function toggleCheck(id){ const t=tasks.find(x=>x.id===id); t.done=!t.done; render(); }
+        function toggleEditMode() { document.body.classList.toggle('edit-mode'); }
+
+        setInterval(updateClock, 1000);
+        render();
+        if(timerState) document.getElementById('timer-overlay').style.display = 'flex';
+    </script>
+</body>
+</html>
